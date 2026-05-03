@@ -52,6 +52,7 @@ struct NoveraPrimaryButton: View {
                 RoundedRectangle(cornerRadius: NoveraRadius.md, style: .continuous)
                     .fill(NoveraColors.primaryGradient)
             )
+            .premium3DDepth(cornerRadius: NoveraRadius.md)
             .noveraShadow(NoveraShadows.primary)
         }
         .scaleOnPress()
@@ -99,14 +100,7 @@ struct NoveraSecondaryButton: View {
             .frame(maxWidth: isFullWidth ? .infinity : nil)
             .frame(height: 54)
             .padding(.horizontal, isFullWidth ? 0 : NoveraSpacing.lg)
-            .background(
-                RoundedRectangle(cornerRadius: NoveraRadius.md, style: .continuous)
-                    .fill(NoveraColors.primary.opacity(0.12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: NoveraRadius.md, style: .continuous)
-                            .strokeBorder(NoveraColors.primary.opacity(0.25), lineWidth: 1)
-                    )
-            )
+            .glassBackground(cornerRadius: NoveraRadius.md, opacity: 0.15)
         }
         .scaleOnPress()
         .accessibilityLabel(title)
@@ -134,6 +128,7 @@ struct NoveraGhostButton: View {
                 .frame(height: 44)
                 .padding(.horizontal, NoveraSpacing.md)
         }
+        .scaleOnPress()
         .accessibilityLabel(title)
     }
 }
@@ -166,10 +161,7 @@ struct NoveraIconButton: View {
                 .font(.system(size: size * 0.42, weight: .semibold))
                 .foregroundStyle(color)
                 .frame(width: size, height: size)
-                .background(
-                    Circle()
-                        .fill(color.opacity(0.12))
-                )
+                .glassBackground(cornerRadius: size / 2, opacity: 0.1)
         }
         .scaleOnPress()
         .accessibilityLabel(icon)
@@ -180,7 +172,6 @@ struct NoveraIconButton: View {
 struct NoveraFAB: View {
     let icon: String
     let action: () -> Void
-    @State private var isPressed = false
 
     var body: some View {
         Button(action: {
@@ -195,7 +186,20 @@ struct NoveraFAB: View {
                     Circle()
                         .fill(NoveraColors.primaryGradient)
                 )
+                .overlay(
+                    Circle()
+                        .stroke(
+                            LinearGradient(
+                                colors: [.white.opacity(0.5), .clear],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.5
+                        )
+                )
                 .noveraShadow(NoveraShadows.primary)
+                // Extra glow effect
+                .shadow(color: NoveraColors.primary.opacity(0.4), radius: 30, x: 0, y: 15)
         }
         .scaleOnPress()
         .accessibilityLabel("Yeni ekle")
@@ -210,4 +214,5 @@ struct NoveraFAB: View {
         NoveraFAB(icon: "plus") {}
     }
     .padding()
+    .background(Color.gray.opacity(0.1))
 }

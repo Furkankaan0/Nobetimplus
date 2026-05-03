@@ -131,7 +131,7 @@ enum NoveraRadius {
     static let full: CGFloat = 999
 }
 
-// MARK: - Shadows
+// MARK: - Shadows & Glows
 enum NoveraShadows {
     static let soft = ShadowStyle(color: Color.black.opacity(0.06), radius: 16, x: 0, y: 4)
     static let medium = ShadowStyle(color: Color.black.opacity(0.10), radius: 24, x: 0, y: 8)
@@ -163,10 +163,10 @@ enum NoveraAnimation {
 }
 
 // MARK: - View Modifiers
-struct GlassBackground: ViewModifier {
+struct PremiumGlassBackground: ViewModifier {
     @Environment(\.colorScheme) var colorScheme
-    var cornerRadius: CGFloat = NoveraRadius.lg
-    var opacity: Double = 1.0
+    var cornerRadius: CGFloat
+    var opacity: Double
 
     func body(content: Content) -> some View {
         content
@@ -180,12 +180,25 @@ struct GlassBackground: ViewModifier {
                         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                             .fill(.ultraThinMaterial)
                     )
-                    .shadow(
-                        color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.08),
-                        radius: 20,
-                        x: 0,
-                        y: 6
+                    // Inner glow for 3D glass edge
+                    .overlay(
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(colorScheme == .dark ? 0.2 : 0.6),
+                                        Color.clear,
+                                        Color.white.opacity(colorScheme == .dark ? 0.05 : 0.2)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
                     )
+                    // Inner shadow for depth
+                    .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.4 : 0.03), radius: 10, x: 0, y: 10)
+                    .shadow(color: Color.white.opacity(colorScheme == .dark ? 0.1 : 0.5), radius: 2, x: 0, y: 1)
             )
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
     }
@@ -200,7 +213,7 @@ struct PrimaryGradientBackground: ViewModifier {
 
 extension View {
     func glassBackground(cornerRadius: CGFloat = NoveraRadius.lg, opacity: Double = 1.0) -> some View {
-        modifier(GlassBackground(cornerRadius: cornerRadius, opacity: opacity))
+        modifier(PremiumGlassBackground(cornerRadius: cornerRadius, opacity: opacity))
     }
 
     func primaryGradientBackground() -> some View {
@@ -214,12 +227,30 @@ extension View {
     func scaleOnPress() -> some View {
         self.buttonStyle(ScaleButtonStyle())
     }
+    
+    // Apple Award Style 3D Button Depth
+    func premium3DDepth(cornerRadius: CGFloat) -> some View {
+        self
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .stroke(
+                        LinearGradient(
+                            colors: [.white.opacity(0.4), .clear, .black.opacity(0.1)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        ),
+                        lineWidth: 1.5
+                    )
+                    .blendMode(.overlay)
+            )
+    }
 }
 
 struct ScaleButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .opacity(configuration.isPressed ? 0.9 : 1.0)
             .animation(NoveraAnimation.springFast, value: configuration.isPressed)
     }
 }

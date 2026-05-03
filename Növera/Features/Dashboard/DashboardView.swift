@@ -267,35 +267,60 @@ struct DashboardView: View {
 // MARK: - Announcement Row
 struct AnnouncementRow: View {
     let announcement: Announcement
+    
+    @State private var isPressed = false
 
     var body: some View {
-        HStack(spacing: NoveraSpacing.sm) {
-            ZStack {
-                Circle()
-                    .fill(NoveraColors.primary.opacity(0.12))
-                    .frame(width: 36, height: 36)
-                Image(systemName: "megaphone.fill")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(NoveraColors.primary)
-            }
+        Button(action: {
+            HapticManager.impact(.light)
+        }) {
+            HStack(spacing: NoveraSpacing.sm) {
+                ZStack {
+                    Circle()
+                        .fill(NoveraColors.primary.opacity(0.12))
+                        .frame(width: 36, height: 36)
+                        .overlay(Circle().stroke(NoveraColors.primary.opacity(0.2), lineWidth: 1))
+                    Image(systemName: "megaphone.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(NoveraColors.primary)
+                        .shadow(color: NoveraColors.primary.opacity(0.3), radius: 3, x: 0, y: 1)
+                }
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(announcement.title)
-                    .font(NoveraFonts.subheadline(.semibold))
-                    .foregroundStyle(NoveraColors.textPrimary)
-                    .lineLimit(1)
-                Text(announcement.message)
-                    .font(NoveraFonts.caption())
-                    .foregroundStyle(NoveraColors.textSecondary)
-                    .lineLimit(2)
-                Text(announcement.createdByName + " • " + announcement.createdAt.dayFormatted)
-                    .font(NoveraFonts.caption())
-                    .foregroundStyle(NoveraColors.textTertiary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(announcement.title)
+                        .font(NoveraFonts.subheadline(.bold))
+                        .foregroundStyle(NoveraColors.textPrimary)
+                        .lineLimit(1)
+                    Text(announcement.message)
+                        .font(NoveraFonts.caption())
+                        .foregroundStyle(NoveraColors.textSecondary)
+                        .lineLimit(2)
+                    Text(announcement.createdByName + " • " + announcement.createdAt.dayFormatted)
+                        .font(NoveraFonts.caption())
+                        .foregroundStyle(NoveraColors.textTertiary)
+                }
             }
+            .padding(NoveraSpacing.md)
+            .glassBackground(cornerRadius: NoveraRadius.md)
+            .scaleEffect(isPressed ? 0.97 : 1.0)
+            .shadow(color: Color.black.opacity(isPressed ? 0.05 : 0.1), radius: isPressed ? 8 : 15, x: 0, y: isPressed ? 4 : 8)
         }
-        .padding(NoveraSpacing.md)
-        .glassBackground(cornerRadius: NoveraRadius.md)
-        .noveraShadow(NoveraShadows.soft)
+        .buttonStyle(PlainButtonStyle())
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    if !isPressed {
+                        withAnimation(NoveraAnimation.springFast) {
+                            isPressed = true
+                        }
+                    }
+                }
+                .onEnded { _ in
+                    withAnimation(NoveraAnimation.springBouncy) {
+                        isPressed = false
+                    }
+                }
+        )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(announcement.title): \(announcement.message)")
     }

@@ -53,14 +53,25 @@ struct MetricCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: NoveraSpacing.sm) {
             HStack {
-                // Icon badge
+                // Icon badge with 3D glow
                 ZStack {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(color.opacity(0.15))
-                        .frame(width: 36, height: 36)
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [color.opacity(0.2), color.opacity(0.05)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 40, height: 40)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .stroke(color.opacity(0.3), lineWidth: 1)
+                        )
                     Image(systemName: icon)
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(color)
+                        .shadow(color: color.opacity(0.5), radius: 5, x: 0, y: 2)
                 }
 
                 Spacer()
@@ -68,9 +79,9 @@ struct MetricCard: View {
                 if let trend, let trendValue {
                     HStack(spacing: 3) {
                         Image(systemName: trend.icon)
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(.system(size: 11, weight: .bold))
                         Text(trendValue)
-                            .font(NoveraFonts.caption(.semibold))
+                            .font(NoveraFonts.caption(.bold))
                     }
                     .foregroundStyle(trend.color)
                     .padding(.horizontal, 8)
@@ -78,19 +89,27 @@ struct MetricCard: View {
                     .background(
                         Capsule()
                             .fill(trend.color.opacity(0.12))
+                            .overlay(
+                                Capsule().stroke(trend.color.opacity(0.2), lineWidth: 1)
+                            )
                     )
                 }
             }
 
-            Text(value)
-                .font(NoveraFonts.display(32))
-                .foregroundStyle(NoveraColors.textPrimary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(value)
+                    .font(NoveraFonts.display(34))
+                    .foregroundStyle(NoveraColors.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .contentTransition(.numericText())
+                    .animation(NoveraAnimation.spring, value: value)
 
-            Text(title)
-                .font(NoveraFonts.footnote(.medium))
-                .foregroundStyle(NoveraColors.textSecondary)
+                Text(title)
+                    .font(NoveraFonts.footnote(.medium))
+                    .foregroundStyle(NoveraColors.textSecondary)
+            }
+            .padding(.top, NoveraSpacing.xs)
 
             if let subtitle {
                 Text(subtitle)
@@ -99,8 +118,7 @@ struct MetricCard: View {
             }
         }
         .padding(NoveraSpacing.md)
-        .glassBackground(cornerRadius: NoveraRadius.lg)
-        .noveraShadow(NoveraShadows.soft)
+        .glassBackground(cornerRadius: NoveraRadius.xl)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title): \(value)")
     }
@@ -110,50 +128,75 @@ struct MetricCard: View {
 struct ShiftPreviewCard: View {
     let shift: Shift
     var isCompact: Bool = false
+    
+    @State private var isPressed = false
 
     var body: some View {
-        HStack(spacing: NoveraSpacing.md) {
-            // Color strip + type icon
-            VStack(spacing: 4) {
-                RoundedRectangle(cornerRadius: 3, style: .continuous)
-                    .fill(shift.shiftType.color)
-                    .frame(width: 4)
-            }
-            .frame(height: isCompact ? 50 : 70)
-
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(shift.title)
-                        .font(NoveraFonts.headline(.semibold))
-                        .foregroundStyle(NoveraColors.textPrimary)
-                    Spacer()
-                    ShiftTypeBadge(type: shift.shiftType)
+        Button(action: {
+            HapticManager.impact(.light)
+            // Handle tap action externally or add navigation
+        }) {
+            HStack(spacing: NoveraSpacing.md) {
+                // Color strip + type icon with glow
+                VStack(spacing: 4) {
+                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                        .fill(shift.shiftType.color)
+                        .frame(width: 4)
+                        .shadow(color: shift.shiftType.color.opacity(0.6), radius: 4, x: 0, y: 0)
                 }
+                .frame(height: isCompact ? 50 : 70)
 
-                HStack(spacing: NoveraSpacing.sm) {
-                    Image(systemName: "clock")
-                        .font(.system(size: 12))
-                        .foregroundStyle(NoveraColors.textSecondary)
-                    Text(shift.timeRangeFormatted)
-                        .font(NoveraFonts.subheadline())
-                        .foregroundStyle(NoveraColors.textSecondary)
-                }
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text(shift.title)
+                            .font(NoveraFonts.headline(.bold))
+                            .foregroundStyle(NoveraColors.textPrimary)
+                        Spacer()
+                        ShiftTypeBadge(type: shift.shiftType)
+                    }
 
-                if !isCompact {
                     HStack(spacing: NoveraSpacing.sm) {
-                        Image(systemName: "mappin")
+                        Image(systemName: "clock.fill")
                             .font(.system(size: 12))
-                            .foregroundStyle(NoveraColors.textTertiary)
-                        Text(shift.location)
-                            .font(NoveraFonts.caption())
-                            .foregroundStyle(NoveraColors.textTertiary)
+                            .foregroundStyle(shift.shiftType.color)
+                        Text(shift.timeRangeFormatted)
+                            .font(NoveraFonts.subheadline(.medium))
+                            .foregroundStyle(NoveraColors.textSecondary)
+                    }
+
+                    if !isCompact {
+                        HStack(spacing: NoveraSpacing.sm) {
+                            Image(systemName: "mappin.circle.fill")
+                                .font(.system(size: 12))
+                                .foregroundStyle(NoveraColors.textTertiary)
+                            Text(shift.location)
+                                .font(NoveraFonts.caption())
+                                .foregroundStyle(NoveraColors.textTertiary)
+                        }
                     }
                 }
             }
+            .padding(NoveraSpacing.md)
+            .glassBackground(cornerRadius: NoveraRadius.lg)
+            .scaleEffect(isPressed ? 0.97 : 1.0)
+            .shadow(color: Color.black.opacity(isPressed ? 0.05 : 0.15), radius: isPressed ? 8 : 20, x: 0, y: isPressed ? 4 : 10)
         }
-        .padding(NoveraSpacing.md)
-        .glassBackground(cornerRadius: NoveraRadius.md)
-        .noveraShadow(NoveraShadows.soft)
+        .buttonStyle(PlainButtonStyle())
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    if !isPressed {
+                        withAnimation(NoveraAnimation.springFast) {
+                            isPressed = true
+                        }
+                    }
+                }
+                .onEnded { _ in
+                    withAnimation(NoveraAnimation.springBouncy) {
+                        isPressed = false
+                    }
+                }
+        )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(shift.title), \(shift.timeRangeFormatted), \(shift.location)")
     }

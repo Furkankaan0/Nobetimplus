@@ -109,30 +109,45 @@ struct EarningsProgressCard: View {
                         .font(NoveraFonts.footnote(.medium))
                         .foregroundStyle(NoveraColors.textSecondary)
                     Text("\(currency)\(Int(currentAmount).formatted())")
-                        .font(NoveraFonts.display(28))
+                        .font(NoveraFonts.display(32))
                         .foregroundStyle(NoveraColors.textPrimary)
+                        .contentTransition(.numericText())
+                        .animation(NoveraAnimation.spring, value: currentAmount)
                 }
                 Spacer()
-                RingProgress(progress: progress, color: NoveraColors.accentGreen, lineWidth: 6, size: 50)
+                RingProgress(progress: progress, color: NoveraColors.accentGreen, lineWidth: 8, size: 54)
+                    .shadow(color: NoveraColors.accentGreen.opacity(0.4), radius: 8, x: 0, y: 4)
             }
 
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
                         .fill(NoveraColors.accentGreen.opacity(0.15))
-                        .frame(height: 6)
+                        .frame(height: 8)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .stroke(Color.black.opacity(0.05), lineWidth: 1)
+                        )
 
-                    RoundedRectangle(cornerRadius: 4, style: .continuous)
-                        .fill(NoveraColors.accentGreen)
-                        .frame(width: barWidth, height: 6)
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [NoveraColors.accentGreen.opacity(0.6), NoveraColors.accentGreen],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: barWidth, height: 8)
+                        .shadow(color: NoveraColors.accentGreen.opacity(0.5), radius: 6, x: 0, y: 2)
                         .onAppear {
-                            withAnimation(NoveraAnimation.spring.delay(0.2)) {
+                            withAnimation(NoveraAnimation.springBouncy.delay(0.2)) {
                                 barWidth = geo.size.width * progress
                             }
                         }
                 }
             }
-            .frame(height: 6)
+            .frame(height: 8)
+            .padding(.vertical, 4)
 
             HStack {
                 Text("Hedef: \(currency)\(Int(targetAmount).formatted())")
@@ -140,13 +155,13 @@ struct EarningsProgressCard: View {
                     .foregroundStyle(NoveraColors.textTertiary)
                 Spacer()
                 Text("%\(Int(progress * 100))")
-                    .font(NoveraFonts.caption(.semibold))
+                    .font(NoveraFonts.caption(.bold))
                     .foregroundStyle(NoveraColors.accentGreen)
+                    .contentTransition(.numericText())
             }
         }
         .padding(NoveraSpacing.md)
-        .glassBackground(cornerRadius: NoveraRadius.lg)
-        .noveraShadow(NoveraShadows.soft)
+        .glassBackground(cornerRadius: NoveraRadius.xl)
     }
 }
 
