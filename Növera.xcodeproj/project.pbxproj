@@ -146,7 +146,7 @@
 		};
 		CORED = {
 			isa = PBXGroup;
-			children = (FA05, FA06, FA07, FA08, FA09, FA10, FA11, FA12, FA13);
+			children = (FA05, FA06, FA07, FA08, FA09, FA10, FA11, FA12, FA13, FA60, FA61, FA62, FA63, FA64);
 			path = Core;
 			sourceTree = "<group>";
 		};
