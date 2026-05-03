@@ -40,10 +40,6 @@ workflows:
             --create \
             --certificate-key "@file:/tmp/cert_key.pem"
 
-      - name: Set up code signing settings on Xcode project
-        script: |
-          xcode-project use-profiles
-
       - name: Increment build number
         script: |
           cd $CM_BUILD_DIR
@@ -54,12 +50,20 @@ workflows:
 
       - name: Build and archive iOS app
         script: |
+          set +e
           xcode-project build-ipa \
             --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME" \
             --config "Release" \
-            --archive-flags="-destination 'generic/platform=iOS'" \
+            --archive-flags="-destination 'generic/platform=iOS' PROVISIONING_PROFILE_SPECIFIER=$PROVISIONING_PROFILE_ID" \
             --export-options-plist /Users/builder/export_options.plist
+          
+          if [ $? -ne 0 ]; then
+            echo "--- XCODEBUILD ERROR LOG ---"
+            cat /tmp/xcodebuild_archive.log 2>/dev/null || find /Users/builder/clone -name "*.log" -exec cat {} +
+            exit 1
+          fi
+          set -e
 
       - name: Generate export options plist
         script: |
