@@ -51,32 +51,6 @@ workflows:
         script: |
           xcode-project use-profiles
 
-      - name: Generate export options plist
-        script: |
-          cat > /Users/builder/export_options.plist <<EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>app-store</string>
-              <key>teamID</key>
-              <string>J5CYS3RDGH</string>
-              <key>provisioningProfiles</key>
-              <dict>
-                  <key>$BUNDLE_ID</key>
-                  <string>$PROVISIONING_PROFILE_ID</string>
-              </dict>
-              <key>uploadBitcode</key>
-              <false/>
-              <key>compileBitcode</key>
-              <false/>
-              <key>uploadSymbols</key>
-              <true/>
-          </dict>
-          </plist>
-          EOF
-
       - name: Build and archive iOS app
         script: |
           set +e
@@ -84,8 +58,8 @@ workflows:
             --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME" \
             --config "Release" \
-            --archive-flags="-destination 'generic/platform=iOS' DEVELOPMENT_TEAM=J5CYS3RDGH" \
-            --export-options-plist /Users/builder/export_options.plist
+            --export-method "app-store" \
+            --archive-flags="-destination 'generic/platform=iOS' DEVELOPMENT_TEAM=J5CYS3RDGH"
           
           if [ $? -ne 0 ]; then
             echo "--- XCODEBUILD ERROR LOG ---"
