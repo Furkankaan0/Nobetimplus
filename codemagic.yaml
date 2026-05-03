@@ -51,6 +51,42 @@ workflows:
         script: |
           xcode-project use-profiles
 
+      - name: Generate export options plist
+        script: |
+          PROFILE_PATH=$(find ~/Library/MobileDevice/Provisioning\ Profiles -name "*.mobileprovision" | head -n 1)
+          if [ -z "$PROFILE_PATH" ]; then
+            echo "No provisioning profile found!"
+            exit 1
+          fi
+          PROFILE_UUID=$(grep -aA1 "UUID" "$PROFILE_PATH" | grep -o "[-A-Z0-9]\{36\}")
+          echo "Found Profile UUID: $PROFILE_UUID"
+
+          cat > /Users/builder/export_options.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store</string>
+              <key>teamID</key>
+              <string>J5CYS3RDGH</string>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>$BUNDLE_ID</key>
+                  <string>$PROFILE_UUID</string>
+              </dict>
+              <key>uploadBitcode</key>
+              <false/>
+              <key>compileBitcode</key>
+              <false/>
+              <key>uploadSymbols</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
+
       - name: Build and archive iOS app
         script: |
           set +e
@@ -58,8 +94,8 @@ workflows:
             --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME" \
             --config "Release" \
-            --export-method "app-store" \
-            --archive-flags="-destination 'generic/platform=iOS' DEVELOPMENT_TEAM=J5CYS3RDGH"
+            --archive-flags="-destination 'generic/platform=iOS' DEVELOPMENT_TEAM=J5CYS3RDGH" \
+            --export-options-plist /Users/builder/export_options.plist
           
           if [ $? -ne 0 ]; then
             echo "--- XCODEBUILD ERROR LOG ---"
