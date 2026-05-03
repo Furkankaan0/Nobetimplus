@@ -47,10 +47,10 @@ workflows:
                       f.write(normalized_key)
           "
           if [ -f /tmp/cert_key.pem ]; then
-            export CERTIFICATE_PRIVATE_KEY=\$(cat /tmp/cert_key.pem)
+            export CERTIFICATE_PRIVATE_KEY=$(cat /tmp/cert_key.pem)
           fi
 
-          app-store-connect fetch-signing-files "\$BUNDLE_ID" \
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --create
 
