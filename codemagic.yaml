@@ -102,43 +102,6 @@ workflows:
         script: |
           xcode-project use-profiles
 
-      - name: Generate export options plist
-        script: |
-          # Search all possible directories where Codemagic might have saved the newly fetched profile
-          PROFILE_PATH=$(find "$HOME/Library/MobileDevice/Provisioning Profiles" "$HOME/.app-store-connect" "$CM_BUILD_DIR" -name "*.mobileprovision" 2>/dev/null | head -n 1)
-          if [ -z "$PROFILE_PATH" ]; then
-            echo "No provisioning profile found anywhere on the system!"
-            exit 1
-          fi
-          PROFILE_UUID=$(security cms -D -i "$PROFILE_PATH" | plutil -extract UUID raw -)
-          echo "Found Profile UUID: $PROFILE_UUID"
-
-          cat > /Users/builder/export_options.plist <<EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>app-store</string>
-              <key>teamID</key>
-              <string>J5CYS3RDGH</string>
-              <key>signingStyle</key>
-              <string>manual</string>
-              <key>provisioningProfiles</key>
-              <dict>
-                  <key>$BUNDLE_ID</key>
-                  <string>$PROFILE_UUID</string>
-              </dict>
-              <key>uploadBitcode</key>
-              <false/>
-              <key>compileBitcode</key>
-              <false/>
-              <key>uploadSymbols</key>
-              <true/>
-          </dict>
-          </plist>
-          EOF
-
       - name: Build and archive iOS app
         script: |
           set +e
@@ -146,8 +109,7 @@ workflows:
             --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME" \
             --config "Release" \
-            --archive-flags="-destination 'generic/platform=iOS' DEVELOPMENT_TEAM=J5CYS3RDGH" \
-            --export-options-plist /Users/builder/export_options.plist
+            --archive-flags="-destination 'generic/platform=iOS' DEVELOPMENT_TEAM=J5CYS3RDGH"
           
           if [ $? -ne 0 ]; then
             echo "--- XCODEBUILD ERROR LOG ---"
