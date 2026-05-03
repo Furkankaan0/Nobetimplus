@@ -1,5 +1,5 @@
 // DashboardView.swift
-// Növera — Premium Dashboard
+// Növera — Apple Award Level Premium Dashboard
 
 import SwiftUI
 
@@ -7,322 +7,261 @@ struct DashboardView: View {
     @StateObject private var vm = DashboardViewModel()
     @EnvironmentObject var appState: AppState
     @State private var showAddShift = false
-    @State private var cardOffset: CGFloat = 30
-    @State private var cardOpacity: Double = 0
 
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottomTrailing) {
-                // Background
-                backgroundGradient
+                // Animated background
+                AnimatedGradientBackground()
 
                 ScrollView(showsIndicators: false) {
-                    VStack(spacing: NoveraSpacing.lg) {
+                    VStack(spacing: NSpacing.xl) {
                         // Header
                         headerSection
-                            .padding(.horizontal, NoveraSpacing.md)
+                            .padding(.horizontal, NSpacing.lg)
+                            .entrance(delay: 0)
 
-                        // Stat cards grid
-                        statCardsSection
-                            .padding(.horizontal, NoveraSpacing.md)
-
-                        // Weekly hours chart
-                        weeklyChartSection
-                            .padding(.horizontal, NoveraSpacing.md)
-
-                        // Upcoming shift
+                        // Hero shift card
                         if let upcoming = vm.upcomingShift {
-                            upcomingShiftSection(upcoming)
-                                .padding(.horizontal, NoveraSpacing.md)
+                            NavigationLink(destination: ShiftDetailView(shift: upcoming)) {
+                                HeroShiftCard(shift: upcoming)
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.horizontal, NSpacing.base)
+                            .entrance(delay: 0.05)
                         }
+
+                        // Metric cards grid
+                        statCardsGrid
+                            .padding(.horizontal, NSpacing.base)
+
+                        // Weekly chart
+                        weeklyChartSection
+                            .padding(.horizontal, NSpacing.base)
+                            .entrance(delay: 0.20)
+
+                        // Earnings preview
+                        earningsPreview
+                            .padding(.horizontal, NSpacing.base)
+                            .entrance(delay: 0.25)
 
                         // Today's shifts
                         if !vm.todayShifts.isEmpty {
                             todayShiftsSection
-                                .padding(.horizontal, NoveraSpacing.md)
+                                .padding(.horizontal, NSpacing.base)
+                                .entrance(delay: 0.30)
                         }
 
-                        // Team announcements
+                        // Announcements
                         if !vm.recentAnnouncements.isEmpty {
                             announcementsSection
-                                .padding(.horizontal, NoveraSpacing.md)
+                                .padding(.horizontal, NSpacing.base)
+                                .entrance(delay: 0.35)
                         }
 
-                        Spacer(minLength: 100)
+                        // Bottom spacer for tab bar
+                        Spacer(minLength: 120)
                     }
-                    .padding(.top, NoveraSpacing.sm)
+                    .padding(.top, NSpacing.sm)
                 }
 
                 // FAB
-                NoveraFAB(icon: "plus") {
+                PremiumFAB(icon: "plus") {
                     showAddShift = true
-                    HapticManager.impact(.medium)
                 }
-                .padding(.trailing, NoveraSpacing.lg)
-                .padding(.bottom, NoveraSpacing.xl)
+                .padding(.trailing, NSpacing.xl)
+                .padding(.bottom, 100) // Above tab bar
             }
             .navigationBarHidden(true)
-            .onAppear {
-                vm.loadData()
-                withAnimation(NoveraAnimation.spring.delay(0.1)) {
-                    cardOffset = 0
-                    cardOpacity = 1
-                }
-            }
+            .onAppear { vm.loadData() }
             .sheet(isPresented: $showAddShift, onDismiss: { vm.loadData() }) {
                 AddShiftView()
             }
         }
     }
 
-    // MARK: - Background
-    var backgroundGradient: some View {
-        LinearGradient(
-            colors: [
-                Color(hue: 0.57, saturation: 0.04, brightness: 0.98),
-                Color(hue: 0.55, saturation: 0.08, brightness: 0.96)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-        .ignoresSafeArea()
-    }
-
     // MARK: - Header
     var headerSection: some View {
         HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: NSpacing.xs) {
                 Text(vm.greetingText)
-                    .font(NoveraFonts.callout())
-                    .foregroundStyle(NoveraColors.textSecondary)
-                Text(vm.userName) + Text(" 👋")
-                    .foregroundStyle(NoveraColors.primary)
+                    .font(NFont.callout(.medium))
+                    .foregroundStyle(NColor.textSecondary)
+
                 Text(vm.userName)
-                    .font(NoveraFonts.largeTitle(.bold))
-                    .foregroundStyle(NoveraColors.textPrimary)
+                    .font(NFont.largeTitle(.bold))
+                    .foregroundStyle(NColor.textPrimary)
+
                 Text(vm.todayDateString)
-                    .font(NoveraFonts.footnote())
-                    .foregroundStyle(NoveraColors.textTertiary)
+                    .font(NFont.footnote())
+                    .foregroundStyle(NColor.textTertiary)
             }
 
             Spacer()
 
-            // Profile avatar
             NavigationLink(destination: ProfileView()) {
                 ZStack {
                     Circle()
-                        .fill(NoveraColors.primaryGradient)
-                        .frame(width: 46, height: 46)
+                        .fill(NColor.primaryGradient)
+                        .frame(width: 48, height: 48)
+                        .overlay(
+                            Circle()
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [.white.opacity(0.4), .clear],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1
+                                )
+                        )
+                        .nShadow(.glow)
+
                     Text(vm.currentUser?.initials ?? "?")
-                        .font(NoveraFonts.headline(.bold))
+                        .font(NFont.headline(.bold))
                         .foregroundStyle(.white)
                 }
-                .noveraShadow(NoveraShadows.primary)
             }
         }
-        .offset(y: cardOffset)
-        .opacity(cardOpacity)
     }
 
-    // MARK: - Stat Cards
-    var statCardsSection: some View {
+    // MARK: - Stat Cards Grid
+    var statCardsGrid: some View {
         LazyVGrid(
             columns: [GridItem(.flexible()), GridItem(.flexible())],
-            spacing: NoveraSpacing.sm
+            spacing: NSpacing.md
         ) {
-            MetricCard(
+            PremiumMetricCard(
                 title: "Haftalık Saat",
                 value: vm.weeklyHoursFormatted,
-                subtitle: "Bu hafta",
                 icon: "clock.fill",
-                color: NoveraColors.primary,
+                color: NColor.primaryFallback,
+                subtitle: "Bu hafta",
                 trend: vm.weeklyHours > 40 ? .up : .neutral,
                 trendValue: vm.weeklyHours > 40 ? "+FZ" : nil
             )
-            .offset(y: cardOffset)
-            .opacity(cardOpacity)
+            .entrance(delay: 0.08)
 
-            MetricCard(
+            PremiumMetricCard(
                 title: "Aylık Nöbet",
                 value: "\(vm.monthlyShiftCount)",
-                subtitle: "Bu ay",
                 icon: "calendar.badge.clock",
-                color: NoveraColors.accent
+                color: NColor.accent,
+                subtitle: "Bu ay"
             )
-            .offset(y: cardOffset)
-            .opacity(cardOpacity)
-            .animation(NoveraAnimation.spring.delay(0.05), value: cardOpacity)
+            .entrance(delay: 0.11)
 
-            MetricCard(
+            PremiumMetricCard(
                 title: "Tahmini FZ",
                 value: vm.overtimeFormatted,
-                subtitle: "Fazla mesai",
                 icon: "clock.badge.plus",
-                color: NoveraColors.shiftOvertime,
+                color: NColor.shiftOvertime,
+                subtitle: "Fazla mesai",
                 trend: vm.estimatedOvertime > 0 ? .up : .neutral,
                 trendValue: vm.estimatedOvertime > 0 ? "Var" : nil
             )
-            .offset(y: cardOffset)
-            .opacity(cardOpacity)
-            .animation(NoveraAnimation.spring.delay(0.10), value: cardOpacity)
+            .entrance(delay: 0.14)
 
-            MetricCard(
+            PremiumMetricCard(
                 title: "Bugün",
                 value: vm.todayShifts.isEmpty ? "Serbest" : "\(vm.todayShifts.count) Nöbet",
-                subtitle: "Durum",
                 icon: vm.todayShifts.isEmpty ? "sun.horizon.fill" : "stethoscope",
-                color: vm.todayShifts.isEmpty ? NoveraColors.accentGreen : NoveraColors.shiftDay
+                color: vm.todayShifts.isEmpty ? NColor.success : NColor.shiftDay,
+                subtitle: "Durum"
             )
-            .offset(y: cardOffset)
-            .opacity(cardOpacity)
-            .animation(NoveraAnimation.spring.delay(0.15), value: cardOpacity)
+            .entrance(delay: 0.17)
         }
     }
 
     // MARK: - Weekly Chart
     var weeklyChartSection: some View {
-        VStack(alignment: .leading, spacing: NoveraSpacing.sm) {
-            NoveraSectionHeader(title: "Bu Hafta", subtitle: "Çalışma saatleri dağılımı")
+        VStack(alignment: .leading, spacing: NSpacing.md) {
+            PremiumSectionHeader(title: "Bu Hafta", subtitle: "Çalışma saatleri dağılımı")
 
-            GlassCard {
-                WeeklyHoursBar(
-                    days: vm.weeklyData,
-                    maxHours: 12,
-                    color: NoveraColors.primary
+            PremiumGlassCard {
+                PremiumBarChart(
+                    data: vm.weeklyData.map { ($0.day, $0.hours) },
+                    maxValue: 12,
+                    color: NColor.primaryFallback,
+                    height: 80
                 )
             }
         }
-        .offset(y: cardOffset)
-        .opacity(cardOpacity)
-        .animation(NoveraAnimation.spring.delay(0.2), value: cardOpacity)
     }
 
-    // MARK: - Upcoming Shift
-    func upcomingShiftSection(_ shift: Shift) -> some View {
-        VStack(alignment: .leading, spacing: NoveraSpacing.sm) {
-            NoveraSectionHeader(title: "Yaklaşan Nöbet")
+    // MARK: - Earnings Preview
+    var earningsPreview: some View {
+        VStack(alignment: .leading, spacing: NSpacing.md) {
+            PremiumSectionHeader(
+                title: "Tahmini Kazanç",
+                action: { appState.selectedTab = .earnings },
+                actionTitle: "Detay"
+            )
 
-            NavigationLink(destination: ShiftDetailView(shift: shift)) {
-                VStack(alignment: .leading, spacing: NoveraSpacing.sm) {
-                    HStack {
-                        Image(systemName: "timer")
-                            .foregroundStyle(NoveraColors.primary)
-                        Text(shift.startDate.dayFormatted)
-                            .font(NoveraFonts.footnote(.semibold))
-                            .foregroundStyle(NoveraColors.primary)
-                        Spacer()
-                        Text(shift.durationInHours.hoursFormatted)
-                            .font(NoveraFonts.caption(.semibold))
-                            .foregroundStyle(NoveraColors.textSecondary)
-                    }
-                    ShiftPreviewCard(shift: shift)
-                }
-            }
-            .buttonStyle(PlainButtonStyle())
+            EarningsProgressCard(
+                currentAmount: vm.estimatedMonthlyEarnings,
+                targetAmount: vm.targetMonthlyEarnings
+            )
         }
-        .offset(y: cardOffset)
-        .opacity(cardOpacity)
-        .animation(NoveraAnimation.spring.delay(0.25), value: cardOpacity)
     }
 
     // MARK: - Today Shifts
     var todayShiftsSection: some View {
-        VStack(alignment: .leading, spacing: NoveraSpacing.sm) {
-            NoveraSectionHeader(
+        VStack(alignment: .leading, spacing: NSpacing.md) {
+            PremiumSectionHeader(
                 title: "Bugünkü Nöbetler",
                 subtitle: "\(vm.todayShifts.count) vardiya"
             )
 
             ForEach(vm.todayShifts) { shift in
                 NavigationLink(destination: ShiftDetailView(shift: shift)) {
-                    ShiftPreviewCard(shift: shift, isCompact: true)
+                    PremiumShiftCard(shift: shift, isCompact: true)
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(.plain)
             }
         }
-        .offset(y: cardOffset)
-        .opacity(cardOpacity)
-        .animation(NoveraAnimation.spring.delay(0.3), value: cardOpacity)
     }
 
     // MARK: - Announcements
     var announcementsSection: some View {
-        VStack(alignment: .leading, spacing: NoveraSpacing.sm) {
-            NoveraSectionHeader(
+        VStack(alignment: .leading, spacing: NSpacing.md) {
+            PremiumSectionHeader(
                 title: "Ekip Duyuruları",
                 action: { appState.selectedTab = .teams },
                 actionTitle: "Tümü"
             )
 
             ForEach(vm.recentAnnouncements) { announcement in
-                AnnouncementRow(announcement: announcement)
+                PremiumAnnouncementRow(announcement: announcement)
             }
         }
-        .offset(y: cardOffset)
-        .opacity(cardOpacity)
-        .animation(NoveraAnimation.spring.delay(0.35), value: cardOpacity)
     }
 }
 
-// MARK: - Announcement Row
-struct AnnouncementRow: View {
+// MARK: - Premium Announcement Row
+struct PremiumAnnouncementRow: View {
     let announcement: Announcement
-    
-    @State private var isPressed = false
 
     var body: some View {
-        Button(action: {
-            HapticManager.impact(.light)
-        }) {
-            HStack(spacing: NoveraSpacing.sm) {
-                ZStack {
-                    Circle()
-                        .fill(NoveraColors.primary.opacity(0.12))
-                        .frame(width: 36, height: 36)
-                        .overlay(Circle().stroke(NoveraColors.primary.opacity(0.2), lineWidth: 1))
-                    Image(systemName: "megaphone.fill")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(NoveraColors.primary)
-                        .shadow(color: NoveraColors.primary.opacity(0.3), radius: 3, x: 0, y: 1)
-                }
+        HStack(spacing: NSpacing.md) {
+            Soft3DIcon(icon: "megaphone.fill", size: .small, color: NColor.primaryFallback)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(announcement.title)
-                        .font(NoveraFonts.subheadline(.bold))
-                        .foregroundStyle(NoveraColors.textPrimary)
-                        .lineLimit(1)
-                    Text(announcement.message)
-                        .font(NoveraFonts.caption())
-                        .foregroundStyle(NoveraColors.textSecondary)
-                        .lineLimit(2)
-                    Text(announcement.createdByName + " • " + announcement.createdAt.dayFormatted)
-                        .font(NoveraFonts.caption())
-                        .foregroundStyle(NoveraColors.textTertiary)
-                }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(announcement.title)
+                    .font(NFont.subheadline(.semibold))
+                    .foregroundStyle(NColor.textPrimary)
+                    .lineLimit(1)
+                Text(announcement.message)
+                    .font(NFont.caption())
+                    .foregroundStyle(NColor.textSecondary)
+                    .lineLimit(2)
+                Text(announcement.createdByName + " • " + announcement.createdAt.dayFormatted)
+                    .font(NFont.caption2())
+                    .foregroundStyle(NColor.textTertiary)
             }
-            .padding(NoveraSpacing.md)
-            .glassBackground(cornerRadius: NoveraRadius.md)
-            .scaleEffect(isPressed ? 0.97 : 1.0)
-            .shadow(color: Color.black.opacity(isPressed ? 0.05 : 0.1), radius: isPressed ? 8 : 15, x: 0, y: isPressed ? 4 : 8)
         }
-        .buttonStyle(PlainButtonStyle())
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in
-                    if !isPressed {
-                        withAnimation(NoveraAnimation.springFast) {
-                            isPressed = true
-                        }
-                    }
-                }
-                .onEnded { _ in
-                    withAnimation(NoveraAnimation.springBouncy) {
-                        isPressed = false
-                    }
-                }
-        )
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(announcement.title): \(announcement.message)")
+        .premiumGlass(radius: NRadius.medium, padding: NSpacing.md)
+        .pressEffect()
     }
 }
 

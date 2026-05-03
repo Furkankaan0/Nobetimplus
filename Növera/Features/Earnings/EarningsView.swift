@@ -1,5 +1,5 @@
 // EarningsView.swift
-// Növera — Earnings & Revenue Tracker
+// Növera — Premium Earnings & Revenue Dashboard
 
 import SwiftUI
 
@@ -10,46 +10,52 @@ struct EarningsView: View {
     var body: some View {
         NavigationStack {
             ScrollView(showsIndicators: false) {
-                VStack(spacing: NoveraSpacing.lg) {
+                VStack(spacing: NSpacing.xl) {
                     // Disclaimer
-                    disclaimerBanner
+                    premiumDisclaimer
+                        .entrance(delay: 0)
 
-                    // Month navigator + main card
+                    // Month navigator
                     monthNavigator
-                        .padding(.horizontal, NoveraSpacing.md)
+                        .padding(.horizontal, NSpacing.base)
+                        .entrance(delay: 0.03)
 
                     if let summary = vm.currentMonthSummary {
-                        // Main revenue card
-                        mainRevenueCard(summary)
-                            .padding(.horizontal, NoveraSpacing.md)
+                        // Main revenue hero card
+                        premiumRevenueCard(summary)
+                            .padding(.horizontal, NSpacing.base)
+                            .entrance(delay: 0.06)
 
-                        // Breakdown cards
-                        breakdownGrid(summary)
-                            .padding(.horizontal, NoveraSpacing.md)
+                        // Breakdown grid
+                        premiumBreakdownGrid(summary)
+                            .padding(.horizontal, NSpacing.base)
 
                         // Hours breakdown
-                        hoursBreakdown(summary)
-                            .padding(.horizontal, NoveraSpacing.md)
+                        premiumHoursBreakdown(summary)
+                            .padding(.horizontal, NSpacing.base)
+                            .entrance(delay: 0.15)
                     }
 
                     // 6-month chart
-                    sixMonthChart
-                        .padding(.horizontal, NoveraSpacing.md)
+                    premiumSixMonthChart
+                        .padding(.horizontal, NSpacing.base)
+                        .entrance(delay: 0.20)
 
                     // Rate settings
-                    rateSettings
-                        .padding(.horizontal, NoveraSpacing.md)
+                    premiumRateSettings
+                        .padding(.horizontal, NSpacing.base)
+                        .entrance(delay: 0.25)
 
-                    Spacer(minLength: 100)
+                    Spacer(minLength: 120)
                 }
-                .padding(.top, NoveraSpacing.sm)
+                .padding(.top, NSpacing.sm)
             }
-            .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
+            .screenBackground()
             .navigationTitle("Gelir Takibi")
             .navigationBarTitleDisplayMode(.large)
             .onAppear {
                 vm.loadData()
-                withAnimation(NoveraAnimation.spring.delay(0.3)) {
+                withAnimation(NMotion.premium.delay(0.3)) {
                     animateRevenue = true
                 }
             }
@@ -57,70 +63,73 @@ struct EarningsView: View {
     }
 
     // MARK: - Disclaimer
-    var disclaimerBanner: some View {
-        HStack(spacing: NoveraSpacing.sm) {
+    var premiumDisclaimer: some View {
+        HStack(spacing: NSpacing.sm) {
             Image(systemName: "info.circle.fill")
-                .foregroundStyle(NoveraColors.info)
-                .font(.system(size: 14))
+                .foregroundStyle(NColor.info)
+                .font(.system(size: 15))
             Text("Bu hesaplamalar tahmini niteliktedir. Gerçek bordro için muhasebe uzmanınıza danışın.")
-                .font(NoveraFonts.caption())
-                .foregroundStyle(NoveraColors.textSecondary)
+                .font(NFont.caption())
+                .foregroundStyle(NColor.textSecondary)
         }
-        .padding(NoveraSpacing.sm)
-        .padding(.horizontal, NoveraSpacing.md)
-        .background(NoveraColors.info.opacity(0.08))
+        .padding(NSpacing.md)
+        .premiumGlass(radius: NRadius.medium, padding: 0)
+        .padding(.horizontal, NSpacing.base)
     }
 
     // MARK: - Month Navigator
     var monthNavigator: some View {
         HStack {
-            NoveraIconButton(icon: "chevron.left") { vm.navigateMonth(by: -1) }
+            PremiumIconButton(icon: "chevron.left") { vm.navigateMonth(by: -1) }
             Spacer()
             Text(vm.selectedMonth.monthYearFormatted)
-                .font(NoveraFonts.title3(.semibold))
+                .font(NFont.title3(.bold))
+                .foregroundStyle(NColor.textPrimary)
             Spacer()
-            NoveraIconButton(icon: "chevron.right") { vm.navigateMonth(by: 1) }
+            PremiumIconButton(icon: "chevron.right") { vm.navigateMonth(by: 1) }
         }
     }
 
-    // MARK: - Main Revenue Card
-    func mainRevenueCard(_ summary: EarningsSummary) -> some View {
-        VStack(spacing: NoveraSpacing.md) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
+    // MARK: - Revenue Hero Card
+    func premiumRevenueCard(_ summary: EarningsSummary) -> some View {
+        VStack(spacing: NSpacing.lg) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: NSpacing.xs) {
                     Text("Tahmini Toplam Kazanç")
-                        .font(NoveraFonts.subheadline())
+                        .font(NFont.subheadline(.medium))
                         .foregroundStyle(.white.opacity(0.8))
                     Text(summary.estimatedRevenue.currencyFormatted)
-                        .font(NoveraFonts.display(38, .bold))
+                        .font(NFont.display(38, .bold))
                         .foregroundStyle(.white)
                         .contentTransition(.numericText())
-                        .animation(NoveraAnimation.spring, value: summary.estimatedRevenue)
+                        .animation(NMotion.premium, value: summary.estimatedRevenue)
                 }
                 Spacer()
-                VStack(alignment: .trailing, spacing: 4) {
+                VStack(alignment: .trailing, spacing: NSpacing.xs) {
                     Text("Toplam Saat")
-                        .font(NoveraFonts.caption())
-                        .foregroundStyle(.white.opacity(0.7))
+                        .font(NFont.caption(.medium))
+                        .foregroundStyle(.white.opacity(0.65))
                     Text(summary.totalHours.hoursFormatted)
-                        .font(NoveraFonts.title2(.bold))
+                        .font(NFont.title2(.bold))
                         .foregroundStyle(.white)
                 }
             }
 
-            // Progress bar: normal vs extra
+            // Progress bar
             let totalRevenue = max(summary.estimatedRevenue, 1)
             let normalRatio = summary.normalRevenue / totalRevenue
 
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4).fill(.white.opacity(0.2)).frame(height: 8)
+                    RoundedRectangle(cornerRadius: 5)
+                        .fill(.white.opacity(0.15))
+                        .frame(height: 8)
                     HStack(spacing: 0) {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(.white.opacity(0.9))
+                        RoundedRectangle(cornerRadius: 5)
+                            .fill(.white.opacity(0.88))
                             .frame(width: geo.size.width * normalRatio, height: 8)
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color(hue: 0.38, saturation: 0.7, brightness: 0.95))
+                        RoundedRectangle(cornerRadius: 5)
+                            .fill(NColor.success)
                             .frame(width: geo.size.width * (1 - normalRatio), height: 8)
                     }
                 }
@@ -129,131 +138,102 @@ struct EarningsView: View {
 
             HStack {
                 Label("Normal", systemImage: "circle.fill")
-                    .font(NoveraFonts.caption()).foregroundStyle(.white.opacity(0.8))
+                    .font(NFont.caption())
+                    .foregroundStyle(.white.opacity(0.75))
                 Spacer()
                 Label("Ekstra", systemImage: "circle.fill")
-                    .font(NoveraFonts.caption()).foregroundStyle(Color(hue: 0.38, saturation: 0.7, brightness: 0.95))
+                    .font(NFont.caption())
+                    .foregroundStyle(NColor.success)
             }
         }
-        .padding(NoveraSpacing.lg)
+        .padding(NSpacing.xl)
         .background(
-            RoundedRectangle(cornerRadius: NoveraRadius.xl, style: .continuous)
-                .fill(NoveraColors.primaryGradient)
+            RoundedRectangle(cornerRadius: NRadius.large, style: .continuous)
+                .fill(NColor.primaryGradient)
+                .overlay(
+                    RoundedRectangle(cornerRadius: NRadius.large, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [.white.opacity(0.35), .clear],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
         )
-        .noveraShadow(NoveraShadows.primary)
+        .depth3D(radius: NRadius.large)
+        .nShadow(.glow)
     }
 
     // MARK: - Breakdown Grid
-    func breakdownGrid(_ summary: EarningsSummary) -> some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: NoveraSpacing.sm) {
-            EarningCell(
-                title: "Normal Mesai",
-                hours: summary.normalHours,
-                amount: summary.normalRevenue,
-                icon: "clock.fill",
-                color: NoveraColors.primary
-            )
-            EarningCell(
-                title: "Fazla Mesai",
-                hours: summary.overtimeHours,
-                amount: summary.overtimeRevenue,
-                icon: "clock.badge.plus",
-                color: NoveraColors.shiftOvertime
-            )
-            EarningCell(
-                title: "Tatil Nöbeti",
-                hours: summary.holidayHours,
-                amount: summary.holidayRevenue,
-                icon: "flag.fill",
-                color: NoveraColors.shiftHoliday
-            )
-            EarningCell(
-                title: "Gece Zammı",
-                hours: summary.nightHours,
-                amount: summary.nightBonus,
-                icon: "moon.stars.fill",
-                color: NoveraColors.shiftNight
-            )
+    func premiumBreakdownGrid(_ summary: EarningsSummary) -> some View {
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: NSpacing.md) {
+            PremiumEarningCell(title: "Normal Mesai", hours: summary.normalHours, amount: summary.normalRevenue, icon: "clock.fill", color: NColor.primaryFallback)
+                .entrance(delay: 0.09)
+            PremiumEarningCell(title: "Fazla Mesai", hours: summary.overtimeHours, amount: summary.overtimeRevenue, icon: "clock.badge.plus", color: NColor.shiftOvertime)
+                .entrance(delay: 0.11)
+            PremiumEarningCell(title: "Tatil Nöbeti", hours: summary.holidayHours, amount: summary.holidayRevenue, icon: "flag.fill", color: NColor.shiftHoliday)
+                .entrance(delay: 0.13)
+            PremiumEarningCell(title: "Gece Zammı", hours: summary.nightHours, amount: summary.nightBonus, icon: "moon.stars.fill", color: NColor.shiftNight)
+                .entrance(delay: 0.15)
         }
     }
 
     // MARK: - Hours Breakdown
-    func hoursBreakdown(_ summary: EarningsSummary) -> some View {
-        VStack(alignment: .leading, spacing: NoveraSpacing.sm) {
-            NoveraSectionHeader(title: "Saat Dağılımı")
-            GlassCard {
-                VStack(spacing: NoveraSpacing.sm) {
-                    HoursRow(label: "Normal", hours: summary.normalHours, color: NoveraColors.primary, total: summary.totalHours)
-                    HoursRow(label: "Fazla Mesai", hours: summary.overtimeHours, color: NoveraColors.shiftOvertime, total: summary.totalHours)
-                    HoursRow(label: "Tatil", hours: summary.holidayHours, color: NoveraColors.shiftHoliday, total: summary.totalHours)
+    func premiumHoursBreakdown(_ summary: EarningsSummary) -> some View {
+        VStack(alignment: .leading, spacing: NSpacing.md) {
+            PremiumSectionHeader(title: "Saat Dağılımı")
+            PremiumGlassCard {
+                VStack(spacing: NSpacing.md) {
+                    PremiumHoursRow(label: "Normal", hours: summary.normalHours, color: NColor.primaryFallback, total: summary.totalHours)
+                    PremiumHoursRow(label: "Fazla Mesai", hours: summary.overtimeHours, color: NColor.shiftOvertime, total: summary.totalHours)
+                    PremiumHoursRow(label: "Tatil", hours: summary.holidayHours, color: NColor.shiftHoliday, total: summary.totalHours)
                 }
             }
         }
     }
 
     // MARK: - 6-Month Chart
-    var sixMonthChart: some View {
-        VStack(alignment: .leading, spacing: NoveraSpacing.sm) {
-            NoveraSectionHeader(title: "Son 6 Ay", subtitle: "Tahmini kazanç trendi")
-            GlassCard {
-                VStack(alignment: .leading, spacing: NoveraSpacing.sm) {
-                    if vm.last6Months.isEmpty {
-                        Text("Yeterli veri yok")
-                            .font(NoveraFonts.subheadline())
-                            .foregroundStyle(NoveraColors.textSecondary)
-                    } else {
-                        HStack(alignment: .bottom, spacing: NoveraSpacing.sm) {
-                            ForEach(vm.last6Months, id: \.month) { summary in
-                                VStack(spacing: 4) {
-                                    RoundedRectangle(cornerRadius: 4, style: .continuous)
-                                        .fill(
-                                            summary.month.isThisMonth
-                                            ? NoveraColors.primaryGradient
-                                            : LinearGradient(colors: [NoveraColors.primary.opacity(0.4)], startPoint: .top, endPoint: .bottom)
-                                        )
-                                        .frame(
-                                            maxWidth: .infinity,
-                                            minHeight: 4,
-                                            maxHeight: max(4, CGFloat(summary.estimatedRevenue / (vm.maxRevenue + 1)) * 80)
-                                        )
-                                        .animation(NoveraAnimation.spring, value: summary.estimatedRevenue)
-
-                                    Text(summary.month.formatted("MMM"))
-                                        .font(NoveraFonts.caption())
-                                        .foregroundStyle(NoveraColors.textTertiary)
-                                }
-                            }
-                        }
-                        .frame(height: 100)
-                    }
+    var premiumSixMonthChart: some View {
+        VStack(alignment: .leading, spacing: NSpacing.md) {
+            PremiumSectionHeader(title: "Son 6 Ay", subtitle: "Tahmini kazanç trendi")
+            PremiumGlassCard {
+                if vm.last6Months.isEmpty {
+                    PremiumEmptyState(icon: "chart.bar", title: "Veri Yok", subtitle: "Yeterli veri oluştuğunda grafik burada görünecek")
+                } else {
+                    PremiumBarChart(
+                        data: vm.last6Months.map { ($0.month.formatted("MMM"), $0.estimatedRevenue) },
+                        maxValue: vm.maxRevenue,
+                        color: NColor.primaryFallback,
+                        height: 90
+                    )
                 }
             }
         }
     }
 
     // MARK: - Rate Settings
-    var rateSettings: some View {
-        VStack(alignment: .leading, spacing: NoveraSpacing.sm) {
-            NoveraSectionHeader(title: "Ücret Ayarları")
-            VStack(spacing: NoveraSpacing.sm) {
+    var premiumRateSettings: some View {
+        VStack(alignment: .leading, spacing: NSpacing.md) {
+            PremiumSectionHeader(title: "Ücret Ayarları")
+            VStack(spacing: NSpacing.md) {
                 RateRow(title: "Saatlik Ücret (₺)", value: $vm.hourlyRate, range: 50...1000)
                 RateRow(title: "Fazla Mesai Çarpanı (x)", value: $vm.overtimeMultiplier, range: 1...3)
                 RateRow(title: "Resmi Tatil Çarpanı (x)", value: $vm.holidayMultiplier, range: 1...3)
 
-                NoveraPrimaryButton("Kaydet", icon: "checkmark") {
+                PremiumPrimaryButton(title: "Kaydet", icon: "checkmark") {
                     vm.saveSettings()
                     HapticManager.notification(.success)
                 }
             }
-            .padding(NoveraSpacing.md)
-            .glassBackground(cornerRadius: NoveraRadius.lg)
-            .noveraShadow(NoveraShadows.soft)
+            .premiumGlass(radius: NRadius.large, padding: NSpacing.base)
         }
     }
 }
 
-// MARK: - Earning Cell
-struct EarningCell: View {
+// MARK: - Premium Earning Cell
+struct PremiumEarningCell: View {
     let title: String
     let hours: Double
     let amount: Double
@@ -261,31 +241,28 @@ struct EarningCell: View {
     let color: Color
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoveraSpacing.xs) {
-            HStack {
-                Image(systemName: icon)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(color)
-                Spacer()
-            }
+        VStack(alignment: .leading, spacing: NSpacing.sm) {
+            Soft3DIcon(icon: icon, size: .small, color: color)
+
             Text(amount.currencyFormatted)
-                .font(NoveraFonts.title3(.bold))
-                .foregroundStyle(NoveraColors.textPrimary)
+                .font(NFont.title3(.bold))
+                .foregroundStyle(NColor.textPrimary)
+                .contentTransition(.numericText())
+
             Text(title)
-                .font(NoveraFonts.caption(.medium))
-                .foregroundStyle(NoveraColors.textSecondary)
+                .font(NFont.caption(.medium))
+                .foregroundStyle(NColor.textSecondary)
+
             Text(hours.hoursFormatted)
-                .font(NoveraFonts.caption())
+                .font(NFont.caption2(.semibold))
                 .foregroundStyle(color)
         }
-        .padding(NoveraSpacing.md)
-        .glassBackground(cornerRadius: NoveraRadius.md)
-        .noveraShadow(NoveraShadows.soft)
+        .premiumGlass(radius: NRadius.medium, padding: NSpacing.base)
     }
 }
 
-// MARK: - Hours Row
-struct HoursRow: View {
+// MARK: - Premium Hours Row
+struct PremiumHoursRow: View {
     let label: String
     let hours: Double
     let color: Color
@@ -299,51 +276,39 @@ struct HoursRow: View {
     @State private var barWidth: CGFloat = 0
 
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: NSpacing.xs) {
             HStack {
                 Text(label)
-                    .font(NoveraFonts.subheadline())
-                    .foregroundStyle(NoveraColors.textPrimary)
+                    .font(NFont.subheadline())
+                    .foregroundStyle(NColor.textPrimary)
                 Spacer()
                 Text(hours.hoursFormatted)
-                    .font(NoveraFonts.subheadline(.semibold))
+                    .font(NFont.subheadline(.semibold))
                     .foregroundStyle(color)
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 3).fill(color.opacity(0.12)).frame(height: 6)
-                    RoundedRectangle(cornerRadius: 3).fill(color).frame(width: barWidth, height: 6)
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(color.opacity(0.12))
+                        .frame(height: 6)
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(
+                            LinearGradient(
+                                colors: [color.opacity(0.5), color],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: barWidth, height: 6)
+                        .shadow(color: color.opacity(0.3), radius: 4, x: 0, y: 2)
                         .onAppear {
-                            withAnimation(NoveraAnimation.spring.delay(0.2)) {
+                            withAnimation(NMotion.bouncy.delay(0.2)) {
                                 barWidth = geo.size.width * ratio
                             }
                         }
                 }
             }
             .frame(height: 6)
-        }
-    }
-}
-
-// MARK: - Rate Row
-struct RateRow: View {
-    let title: String
-    @Binding var value: Double
-    let range: ClosedRange<Double>
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(title)
-                    .font(NoveraFonts.subheadline())
-                Spacer()
-                Text(String(format: "%.0f", value))
-                    .font(NoveraFonts.subheadline(.semibold))
-                    .foregroundStyle(NoveraColors.primary)
-                    .frame(width: 60, alignment: .trailing)
-            }
-            Slider(value: $value, in: range, step: range == 50...1000 ? 10 : 0.1)
-                .tint(NoveraColors.primary)
         }
     }
 }

@@ -52,6 +52,11 @@
 		AA48 /* CalendarSyncService.swift */ = {isa = PBXBuildFile; fileRef = FA48; };
 		AA49 /* KeychainService.swift */ = {isa = PBXBuildFile; fileRef = FA49; };
 		AA51 /* Assets.xcassets */ = {isa = PBXBuildFile; fileRef = FA51; };
+		AA60 /* NoveraDesignSystem.swift */ = {isa = PBXBuildFile; fileRef = FA60; };
+		AA61 /* PremiumComponents.swift */ = {isa = PBXBuildFile; fileRef = FA61; };
+		AA62 /* PremiumCards.swift */ = {isa = PBXBuildFile; fileRef = FA62; };
+		AA63 /* PremiumButtons.swift */ = {isa = PBXBuildFile; fileRef = FA63; };
+		AA64 /* FloatingTabBar.swift */ = {isa = PBXBuildFile; fileRef = FA64; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -104,6 +109,11 @@
 		FA51 = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		PROD1 = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Növera.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		PLIST = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		FA60 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem/NoveraDesignSystem.swift; sourceTree = "<group>"; };
+		FA61 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components/PremiumComponents.swift; sourceTree = "<group>"; };
+		FA62 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components/PremiumCards.swift; sourceTree = "<group>"; };
+		FA63 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components/PremiumButtons.swift; sourceTree = "<group>"; };
+		FA64 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components/FloatingTabBar.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -217,6 +227,7 @@
 				AA21, AA22, AA23, AA24, AA25, AA26, AA27, AA28, AA29,
 				AA31, AA32, AA33, AA34, AA35, AA36, AA37, AA38, AA39, AA40,
 				AA41, AA42, AA43, AA44, AA45, AA46, AA47, AA48, AA49,
+				AA60, AA61, AA62, AA63, AA64,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

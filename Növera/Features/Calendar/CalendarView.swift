@@ -12,32 +12,32 @@ struct CalendarView: View {
             VStack(spacing: 0) {
                 // Header
                 calendarHeader
-                    .padding(.horizontal, NoveraSpacing.md)
-                    .padding(.top, NoveraSpacing.md)
+                    .padding(.horizontal, NSpacing.base)
+                    .padding(.top, NSpacing.base)
 
                 // Mode Picker
-                modePicker
-                    .padding(.horizontal, NoveraSpacing.md)
-                    .padding(.top, NoveraSpacing.sm)
+                premiumModePicker
+                    .padding(.horizontal, NSpacing.base)
+                    .padding(.top, NSpacing.md)
 
                 ScrollView(showsIndicators: false) {
-                    VStack(spacing: NoveraSpacing.md) {
-                        // Monthly grid
+                    VStack(spacing: NSpacing.base) {
                         if vm.viewMode == .monthly {
                             monthlyCalendarGrid
-                                .padding(.horizontal, NoveraSpacing.md)
-                                .padding(.top, NoveraSpacing.md)
+                                .padding(.horizontal, NSpacing.base)
+                                .padding(.top, NSpacing.base)
+                                .entrance(delay: 0.05)
                         }
 
-                        // Selected date shifts
                         selectedDaySection
-                            .padding(.horizontal, NoveraSpacing.md)
+                            .padding(.horizontal, NSpacing.base)
+                            .entrance(delay: 0.10)
 
-                        Spacer(minLength: 100)
+                        Spacer(minLength: 120)
                     }
                 }
             }
-            .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
+            .screenBackground()
             .navigationBarHidden(true)
             .onAppear { vm.loadMonth() }
             .sheet(isPresented: $showAddShift, onDismiss: { vm.loadMonth() }) {
@@ -51,106 +51,98 @@ struct CalendarView: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Takvim")
-                    .font(NoveraFonts.largeTitle(.bold))
+                    .font(NFont.largeTitle(.bold))
+                    .foregroundStyle(NColor.textPrimary)
                 Text(vm.displayedMonthTitle)
-                    .font(NoveraFonts.callout())
-                    .foregroundStyle(NoveraColors.textSecondary)
+                    .font(NFont.callout())
+                    .foregroundStyle(NColor.textSecondary)
             }
             Spacer()
-            HStack(spacing: NoveraSpacing.sm) {
-                NoveraIconButton(icon: "chevron.left") { vm.navigateMonth(by: -1) }
-                NoveraIconButton(icon: "chevron.right") { vm.navigateMonth(by: 1) }
-                NoveraIconButton(icon: "plus", color: NoveraColors.primary) { showAddShift = true }
+            HStack(spacing: NSpacing.sm) {
+                PremiumIconButton(icon: "chevron.left") { vm.navigateMonth(by: -1) }
+                PremiumIconButton(icon: "chevron.right") { vm.navigateMonth(by: 1) }
+                PremiumIconButton(icon: "plus", color: NColor.primaryFallback) { showAddShift = true }
             }
         }
     }
 
-    // MARK: - Mode Picker
-    var modePicker: some View {
+    // MARK: - Glass Mode Picker
+    var premiumModePicker: some View {
         HStack(spacing: 0) {
             ForEach(CalendarViewMode.allCases, id: \.self) { mode in
                 Button(action: {
-                    withAnimation(NoveraAnimation.springFast) {
-                        vm.viewMode = mode
-                    }
+                    withAnimation(NMotion.snappy) { vm.viewMode = mode }
                     HapticManager.selection()
                 }) {
                     Text(mode.rawValue)
-                        .font(NoveraFonts.subheadline(.medium))
-                        .foregroundStyle(vm.viewMode == mode ? .white : NoveraColors.textSecondary)
+                        .font(NFont.subheadline(.medium))
+                        .foregroundStyle(vm.viewMode == mode ? .white : NColor.textSecondary)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 36)
+                        .frame(height: 38)
                         .background(
-                            RoundedRectangle(cornerRadius: NoveraRadius.sm - 4, style: .continuous)
-                                .fill(vm.viewMode == mode ? NoveraColors.primary : .clear)
+                            RoundedRectangle(cornerRadius: NRadius.small - 2, style: .continuous)
+                                .fill(vm.viewMode == mode ? NColor.primaryFallback : .clear)
                         )
                 }
             }
         }
         .padding(4)
-        .background(
-            RoundedRectangle(cornerRadius: NoveraRadius.sm, style: .continuous)
-                .fill(Color(UIColor.tertiarySystemGroupedBackground))
-        )
+        .premiumGlass(radius: NRadius.small, padding: 0)
     }
 
     // MARK: - Monthly Grid
     var monthlyCalendarGrid: some View {
         VStack(spacing: 4) {
-            // Weekday headers
             HStack {
                 ForEach(["Pt", "Sa", "Ça", "Pe", "Cu", "Ct", "Pz"], id: \.self) { day in
                     Text(day)
-                        .font(NoveraFonts.caption(.semibold))
-                        .foregroundStyle(NoveraColors.textTertiary)
+                        .font(NFont.caption(.semibold))
+                        .foregroundStyle(NColor.textTertiary)
                         .frame(maxWidth: .infinity)
                 }
             }
             .padding(.bottom, 4)
 
-            // Day cells
             let days = vm.daysInDisplayedMonth
             let offset = vm.firstWeekdayOffset
 
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 4) {
-                // Empty cells for offset
                 ForEach(0..<offset, id: \.self) { _ in
-                    Color.clear.frame(height: 48)
+                    Color.clear.frame(height: 52)
                 }
-                // Day cells
                 ForEach(days, id: \.self) { date in
-                    CalendarDayCell(
+                    PremiumCalendarDayCell(
                         date: date,
                         isSelected: Calendar.current.isDate(date, inSameDayAs: vm.selectedDate),
                         isToday: date.isToday,
                         shiftCount: vm.shiftDensity(for: date),
                         shifts: vm.shiftsForDate(date)
                     )
-                    .onTapGesture { vm.selectDate(date) }
+                    .onTapGesture {
+                        HapticManager.selection()
+                        vm.selectDate(date)
+                    }
                 }
             }
         }
-        .padding(NoveraSpacing.md)
-        .glassBackground(cornerRadius: NoveraRadius.lg)
-        .noveraShadow(NoveraShadows.soft)
+        .premiumGlass(radius: NRadius.large, padding: NSpacing.base)
     }
 
     // MARK: - Selected Day
     var selectedDaySection: some View {
-        VStack(alignment: .leading, spacing: NoveraSpacing.sm) {
+        VStack(alignment: .leading, spacing: NSpacing.md) {
             HStack {
                 Text(vm.selectedDateTitle)
-                    .font(NoveraFonts.title3(.semibold))
+                    .font(NFont.title3(.bold))
+                    .foregroundStyle(NColor.textPrimary)
                 Spacer()
-                Button(action: { showAddShift = true }) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 22))
-                        .foregroundStyle(NoveraColors.primary)
+                PremiumIconButton(icon: "plus.circle.fill", color: NColor.primaryFallback) {
+                    showAddShift = true
                 }
             }
 
             if vm.shiftsForSelectedDate.isEmpty {
-                NoveraEmptyState(
+                PremiumEmptyState(
                     icon: "calendar.badge.plus",
                     title: "Bu gün serbest",
                     subtitle: "Vardiya eklemek için + butonuna basın",
@@ -159,61 +151,67 @@ struct CalendarView: View {
             } else {
                 ForEach(vm.shiftsForSelectedDate) { shift in
                     NavigationLink(destination: ShiftDetailView(shift: shift)) {
-                        ShiftPreviewCard(shift: shift)
+                        PremiumShiftCard(shift: shift)
                     }
-                    .buttonStyle(PlainButtonStyle())
+                    .buttonStyle(.plain)
                 }
             }
         }
     }
 }
 
-// MARK: - Calendar Day Cell
-struct CalendarDayCell: View {
+// MARK: - Premium Calendar Day Cell
+struct PremiumCalendarDayCell: View {
     let date: Date
     let isSelected: Bool
     let isToday: Bool
     let shiftCount: Int
     let shifts: [Shift]
 
+    @Environment(\.colorScheme) var colorScheme
+
     var dayNumber: String {
         Calendar.current.component(.day, from: date).description
     }
 
     var body: some View {
-        VStack(spacing: 3) {
+        VStack(spacing: 4) {
             ZStack {
                 if isSelected {
                     Circle()
-                        .fill(NoveraColors.primaryGradient)
-                        .frame(width: 34, height: 34)
+                        .fill(NColor.primaryGradient)
+                        .frame(width: 36, height: 36)
+                        .shadow(color: NColor.primaryFallback.opacity(0.3), radius: 6, x: 0, y: 2)
                 } else if isToday {
                     Circle()
-                        .strokeBorder(NoveraColors.primary, lineWidth: 1.5)
-                        .frame(width: 34, height: 34)
+                        .strokeBorder(NColor.primaryFallback, lineWidth: 1.5)
+                        .frame(width: 36, height: 36)
                 }
 
                 Text(dayNumber)
-                    .font(NoveraFonts.subheadline(isToday || isSelected ? .bold : .regular))
+                    .font(NFont.subheadline(isToday || isSelected ? .bold : .regular))
                     .foregroundStyle(
                         isSelected ? .white :
-                        isToday ? NoveraColors.primary :
-                        NoveraColors.textPrimary
+                        isToday ? NColor.primaryFallback :
+                        NColor.textPrimary
                     )
             }
 
-            // Shift density dots
             if shiftCount > 0 {
                 HStack(spacing: 2) {
                     ForEach(0..<min(shiftCount, 3), id: \.self) { idx in
                         Circle()
-                            .fill(idx < shifts.count ? shifts[idx].shiftType.color : NoveraColors.primary)
+                            .fill(
+                                idx < shifts.count
+                                ? shifts[idx].shiftType.color
+                                : NColor.primaryFallback
+                            )
                             .frame(width: 5, height: 5)
                     }
                 }
             }
         }
-        .frame(height: 48)
+        .frame(height: 52)
         .accessibilityLabel("\(dayNumber), \(shiftCount) vardiya")
     }
 }

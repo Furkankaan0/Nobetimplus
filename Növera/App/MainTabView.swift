@@ -1,45 +1,34 @@
 // MainTabView.swift
-// Növera — Main Tab Navigation
+// Növera — Premium Floating Tab Navigation
 
 import SwiftUI
 
 struct MainTabView: View {
     @EnvironmentObject var appState: AppState
-    @State private var tabBarVisible = true
 
     var body: some View {
-        TabView(selection: $appState.selectedTab) {
-            DashboardView()
-                .tabItem {
-                    Label("Dashboard", systemImage: "house.fill")
+        ZStack(alignment: .bottom) {
+            // Active screen
+            Group {
+                switch appState.selectedTab {
+                case .dashboard:
+                    DashboardView()
+                case .calendar:
+                    CalendarView()
+                case .teams:
+                    TeamsView()
+                case .earnings:
+                    EarningsView()
+                case .profile:
+                    ProfileView()
                 }
-                .tag(AppState.TabItem.dashboard)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            CalendarView()
-                .tabItem {
-                    Label("Takvim", systemImage: "calendar")
-                }
-                .tag(AppState.TabItem.calendar)
-
-            TeamsView()
-                .tabItem {
-                    Label("Ekip", systemImage: "person.2.fill")
-                }
-                .tag(AppState.TabItem.teams)
-
-            EarningsView()
-                .tabItem {
-                    Label("Gelir", systemImage: "chart.bar.fill")
-                }
-                .tag(AppState.TabItem.earnings)
-
-            ProfileView()
-                .tabItem {
-                    Label("Profil", systemImage: "person.crop.circle.fill")
-                }
-                .tag(AppState.TabItem.profile)
+            // Floating Tab Bar
+            FloatingTabBar(selectedTab: $appState.selectedTab)
         }
-        .tint(NoveraColors.primary)
+        .ignoresSafeArea(.keyboard)
     }
 }
 

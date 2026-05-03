@@ -1,5 +1,5 @@
 // ProfileView.swift
-// Növera — User Profile & Settings
+// Növera — Premium User Profile & Settings
 
 import SwiftUI
 
@@ -15,28 +15,32 @@ struct ProfileView: View {
     var body: some View {
         NavigationStack {
             ScrollView(showsIndicators: false) {
-                VStack(spacing: NoveraSpacing.lg) {
-                    // Avatar & name
-                    profileHeader
+                VStack(spacing: NSpacing.xl) {
+                    // Premium avatar header
+                    premiumProfileHeader
+                        .entrance(delay: 0)
 
                     // Premium banner
                     if !appState.isPremiumUser {
                         premiumBanner
-                            .padding(.horizontal, NoveraSpacing.md)
+                            .padding(.horizontal, NSpacing.base)
+                            .entrance(delay: 0.05)
                     }
 
-                    // Settings sections
-                    settingsSections
-                        .padding(.horizontal, NoveraSpacing.md)
+                    // Settings
+                    premiumSettings
+                        .padding(.horizontal, NSpacing.base)
+                        .entrance(delay: 0.10)
 
                     // App info
-                    appInfo
-                        .padding(.horizontal, NoveraSpacing.md)
+                    premiumAppInfo
+                        .padding(.horizontal, NSpacing.base)
+                        .entrance(delay: 0.15)
 
-                    Spacer(minLength: 100)
+                    Spacer(minLength: 120)
                 }
             }
-            .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
+            .screenBackground()
             .navigationBarHidden(true)
             .sheet(isPresented: $showEditProfile) {
                 EditProfileView()
@@ -53,176 +57,173 @@ struct ProfileView: View {
     }
 
     // MARK: - Profile Header
-    var profileHeader: some View {
-        VStack(spacing: NoveraSpacing.md) {
-            // Background gradient
+    var premiumProfileHeader: some View {
+        VStack(spacing: NSpacing.lg) {
             ZStack(alignment: .bottom) {
-                Rectangle()
-                    .fill(NoveraColors.primaryGradient)
-                    .frame(height: 140)
+                // Background gradient
+                RoundedRectangle(cornerRadius: 0, style: .continuous)
+                    .fill(NColor.primaryGradient)
+                    .frame(height: 150)
+                    .overlay(
+                        LinearGradient(
+                            colors: [.clear, NColor.background.opacity(0.8)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
                     .ignoresSafeArea(edges: .top)
 
-                VStack(spacing: NoveraSpacing.sm) {
-                    ZStack {
-                        Circle()
-                            .fill(.white)
-                            .frame(width: 90, height: 90)
-                        Circle()
-                            .fill(NoveraColors.primaryGradient)
-                            .frame(width: 82, height: 82)
-                        Text(user?.initials ?? "?")
-                            .font(NoveraFonts.display(28, .bold))
-                            .foregroundStyle(.white)
-                    }
-                    .noveraShadow(NoveraShadows.primary)
-                    .offset(y: 30)
+                // Avatar
+                ZStack {
+                    Circle()
+                        .fill(NColor.background)
+                        .frame(width: 96, height: 96)
+                        .nShadow(.floating)
+
+                    Circle()
+                        .fill(NColor.primaryGradient)
+                        .frame(width: 86, height: 86)
+                        .overlay(
+                            Circle()
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [.white.opacity(0.4), .clear],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1.5
+                                )
+                        )
+
+                    Text(user?.initials ?? "?")
+                        .font(NFont.display(30, .bold))
+                        .foregroundStyle(.white)
                 }
+                .offset(y: 36)
             }
-            .frame(height: 140)
+            .frame(height: 150)
 
-            Spacer(minLength: 20)
+            Spacer(minLength: 28)
 
-            VStack(spacing: NoveraSpacing.xs) {
+            VStack(spacing: NSpacing.xs) {
                 Text(user?.name ?? "Kullanıcı")
-                    .font(NoveraFonts.title2(.bold))
+                    .font(NFont.title2(.bold))
+                    .foregroundStyle(NColor.textPrimary)
                 Text(user?.profession.displayName ?? "")
-                    .font(NoveraFonts.callout())
-                    .foregroundStyle(NoveraColors.textSecondary)
+                    .font(NFont.callout(.medium))
+                    .foregroundStyle(NColor.textSecondary)
                 if let dept = user?.department, !dept.isEmpty {
                     Text(dept)
-                        .font(NoveraFonts.subheadline())
-                        .foregroundStyle(NoveraColors.textTertiary)
+                        .font(NFont.subheadline())
+                        .foregroundStyle(NColor.textTertiary)
                 }
             }
 
-            Button(action: { showEditProfile = true }) {
-                Label("Profili Düzenle", systemImage: "pencil")
-                    .font(NoveraFonts.subheadline(.medium))
-                    .foregroundStyle(NoveraColors.primary)
-                    .padding(.horizontal, NoveraSpacing.md)
-                    .padding(.vertical, NoveraSpacing.sm)
-                    .background(Capsule().fill(NoveraColors.primary.opacity(0.1)))
+            PremiumSecondaryButton(title: "Profili Düzenle", icon: "pencil") {
+                showEditProfile = true
             }
+            .frame(maxWidth: 200)
         }
     }
 
     // MARK: - Premium Banner
     var premiumBanner: some View {
         Button(action: { showPremium = true }) {
-            HStack(spacing: NoveraSpacing.md) {
-                Image(systemName: "star.fill")
-                    .font(.system(size: 22))
-                    .foregroundStyle(NoveraColors.accentGradient)
+            HStack(spacing: NSpacing.md) {
+                Soft3DIcon(icon: "star.fill", size: .medium, color: NColor.accent)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Növera Pro'yu Keşfet")
-                        .font(NoveraFonts.headline(.bold))
+                        .font(NFont.headline(.bold))
+                        .foregroundStyle(NColor.textPrimary)
                     Text("Sınırsız vardiya, ekip yönetimi ve daha fazlası")
-                        .font(NoveraFonts.caption())
-                        .foregroundStyle(NoveraColors.textSecondary)
+                        .font(NFont.caption())
+                        .foregroundStyle(NColor.textSecondary)
                 }
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .foregroundStyle(NoveraColors.textTertiary)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(NColor.textTertiary)
             }
-            .padding(NoveraSpacing.md)
-            .background(
-                RoundedRectangle(cornerRadius: NoveraRadius.lg, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(hue: 0.72, saturation: 0.12, brightness: 0.98),
-                                Color(hue: 0.55, saturation: 0.08, brightness: 0.97)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: NoveraRadius.lg, style: .continuous)
-                            .strokeBorder(NoveraColors.accent.opacity(0.2), lineWidth: 1)
-                    )
+            .premiumGlass(radius: NRadius.large, padding: NSpacing.base)
+            .overlay(
+                RoundedRectangle(cornerRadius: NRadius.large, style: .continuous)
+                    .strokeBorder(NColor.accent.opacity(0.25), lineWidth: 1)
             )
-            .noveraShadow(NoveraShadows.soft)
         }
-        .scaleOnPress()
+        .pressEffect()
     }
 
     // MARK: - Settings Sections
-    var settingsSections: some View {
-        VStack(spacing: NoveraSpacing.md) {
-            SettingsSection(title: "Uygulama") {
-                SettingsRow(icon: "bell.fill", color: NoveraColors.shiftOncall, title: "Bildirimler") {
+    var premiumSettings: some View {
+        VStack(spacing: NSpacing.lg) {
+            PremiumSettingsSection(title: "Uygulama") {
+                PremiumSettingsRow(icon: "bell.fill", color: NColor.shiftOncall, title: "Bildirimler") {
                     showNotifications = true
                 }
-                SettingsRow(icon: "moon.fill", color: NoveraColors.shiftNight, title: "Görünüm") {
-                    // TODO: Theme picker
-                }
-                SettingsRow(icon: "globe", color: NoveraColors.primary, title: "Dil") {
-                    // TODO: Language picker
-                }
+                PremiumSettingsRow(icon: "moon.fill", color: NColor.shiftNight, title: "Görünüm") {}
+                PremiumSettingsRow(icon: "globe", color: NColor.primaryFallback, title: "Dil") {}
             }
 
-            SettingsSection(title: "Hesap") {
-                SettingsRow(icon: "person.fill", color: NoveraColors.accent, title: "Profili Düzenle") {
+            PremiumSettingsSection(title: "Hesap") {
+                PremiumSettingsRow(icon: "person.fill", color: NColor.accent, title: "Profili Düzenle") {
                     showEditProfile = true
                 }
-                SettingsRow(icon: "lock.fill", color: NoveraColors.textSecondary, title: "Gizlilik ve Güvenlik") {}
-                SettingsRow(icon: "rectangle.portrait.and.arrow.right", color: NoveraColors.error, title: "Çıkış Yap", isDestructive: true) {
+                PremiumSettingsRow(icon: "lock.fill", color: NColor.textSecondary, title: "Gizlilik ve Güvenlik") {}
+                PremiumSettingsRow(icon: "rectangle.portrait.and.arrow.right", color: NColor.danger, title: "Çıkış Yap", isDestructive: true) {
                     authService.signOut()
                     appState.hasCompletedOnboarding = false
                 }
             }
 
-            SettingsSection(title: "Destek") {
-                SettingsRow(icon: "questionmark.circle.fill", color: NoveraColors.info, title: "Yardım Merkezi") {}
-                SettingsRow(icon: "envelope.fill", color: NoveraColors.primary, title: "Bize Ulaşın") {}
-                SettingsRow(icon: "star.fill", color: NoveraColors.warning, title: "Uygulamayı Puanla") {}
+            PremiumSettingsSection(title: "Destek") {
+                PremiumSettingsRow(icon: "questionmark.circle.fill", color: NColor.info, title: "Yardım Merkezi") {}
+                PremiumSettingsRow(icon: "envelope.fill", color: NColor.primaryFallback, title: "Bize Ulaşın") {}
+                PremiumSettingsRow(icon: "star.fill", color: NColor.warning, title: "Uygulamayı Puanla") {}
             }
         }
     }
 
     // MARK: - App Info
-    var appInfo: some View {
+    var premiumAppInfo: some View {
         VStack(spacing: 4) {
             Text("Növera")
-                .font(NoveraFonts.headline(.semibold))
-                .foregroundStyle(NoveraColors.textTertiary)
+                .font(NFont.headline(.semibold))
+                .foregroundStyle(NColor.textTertiary)
             Text("v\(NoveraConstants.appVersion) (\(NoveraConstants.buildNumber))")
-                .font(NoveraFonts.caption())
-                .foregroundStyle(NoveraColors.textTertiary)
+                .font(NFont.caption())
+                .foregroundStyle(NColor.textTertiary)
             Text("© 2024 Növera. Tüm hakları saklıdır.")
-                .font(NoveraFonts.caption())
-                .foregroundStyle(NoveraColors.textTertiary)
+                .font(NFont.caption())
+                .foregroundStyle(NColor.textTertiary)
         }
         .frame(maxWidth: .infinity)
-        .padding(NoveraSpacing.md)
+        .padding(NSpacing.base)
     }
 }
 
-// MARK: - Settings Section
-struct SettingsSection<Content: View>: View {
+// MARK: - Premium Settings Section
+struct PremiumSettingsSection<Content: View>: View {
     let title: String
     @ViewBuilder let content: () -> Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NoveraSpacing.xs) {
+        VStack(alignment: .leading, spacing: NSpacing.sm) {
             Text(title.uppercased())
-                .font(NoveraFonts.caption(.semibold))
-                .foregroundStyle(NoveraColors.textTertiary)
-                .padding(.horizontal, NoveraSpacing.sm)
+                .font(NFont.caption(.bold))
+                .foregroundStyle(NColor.textTertiary)
+                .padding(.horizontal, NSpacing.sm)
 
             VStack(spacing: 0) {
                 content()
             }
-            .glassBackground(cornerRadius: NoveraRadius.lg)
-            .noveraShadow(NoveraShadows.soft)
+            .premiumGlass(radius: NRadius.large, padding: 0)
         }
     }
 }
 
-// MARK: - Settings Row
-struct SettingsRow: View {
+// MARK: - Premium Settings Row
+struct PremiumSettingsRow: View {
     let icon: String
     let color: Color
     let title: String
@@ -234,115 +235,43 @@ struct SettingsRow: View {
             HapticManager.selection()
             action()
         }) {
-            HStack(spacing: NoveraSpacing.md) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(color.opacity(0.12))
-                        .frame(width: 32, height: 32)
-                    Image(systemName: icon)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(color)
-                }
+            HStack(spacing: NSpacing.md) {
+                Soft3DIcon(icon: icon, size: .small, color: isDestructive ? NColor.danger : color)
 
                 Text(title)
-                    .font(NoveraFonts.callout())
-                    .foregroundStyle(isDestructive ? NoveraColors.error : NoveraColors.textPrimary)
+                    .font(NFont.callout(.medium))
+                    .foregroundStyle(isDestructive ? NColor.danger : NColor.textPrimary)
 
                 Spacer()
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(NoveraColors.textTertiary)
+                    .foregroundStyle(NColor.textTertiary)
             }
-            .padding(.horizontal, NoveraSpacing.md)
-            .padding(.vertical, NoveraSpacing.sm)
+            .padding(.horizontal, NSpacing.base)
+            .padding(.vertical, NSpacing.md)
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
         .accessibilityLabel(title)
     }
 }
 
-// MARK: - Edit Profile View
-struct EditProfileView: View {
-    @EnvironmentObject var authService: AuthService
-    @Environment(\.dismiss) var dismiss
-    @State private var name: String = ""
-    @State private var department: String = ""
-    @State private var profession: Profession = .nurse
-    @State private var hourlyRate: String = ""
-
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: NoveraSpacing.md) {
-                    NoveraFormField(label: "Ad Soyad", isRequired: true) {
-                        NoveraTextField(placeholder: "Adınız ve soyadınız", text: $name, icon: "person")
-                    }
-                    NoveraFormField(label: "Bölüm") {
-                        NoveraTextField(placeholder: "Örn: Acil Servis", text: $department, icon: "building.2")
-                    }
-                    NoveraFormField(label: "Meslek") {
-                        Picker("Meslek", selection: $profession) {
-                            ForEach(Profession.allCases, id: \.self) { p in
-                                Label(p.displayName, systemImage: p.icon).tag(p)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        .padding(.horizontal, NoveraSpacing.md)
-                        .frame(height: 52)
-                        .background(
-                            RoundedRectangle(cornerRadius: NoveraRadius.sm, style: .continuous)
-                                .fill(Color(UIColor.tertiarySystemGroupedBackground))
-                        )
-                    }
-                    NoveraFormField(label: "Saatlik Ücret (₺)") {
-                        NoveraTextField(
-                            placeholder: "Örn: 150",
-                            text: $hourlyRate,
-                            icon: "turkishlirasign",
-                            keyboardType: .decimalPad
-                        )
-                    }
-                    NoveraPrimaryButton("Kaydet", icon: "checkmark") {
-                        authService.updateProfile(
-                            name: name,
-                            profession: profession,
-                            department: department,
-                            hourlyRate: Double(hourlyRate)
-                        )
-                        dismiss()
-                    }
-                }
-                .padding(NoveraSpacing.md)
-            }
-            .navigationTitle("Profili Düzenle")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("İptal") { dismiss() }
-                }
-            }
-            .onAppear {
-                if let user = authService.currentUser {
-                    name = user.name
-                    department = user.department
-                    profession = user.profession
-                    hourlyRate = user.hourlyRate.map { String(Int($0)) } ?? ""
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Settings View (Tab placeholder)
+// MARK: - Settings View (backward compat)
 struct SettingsView: View {
     var body: some View {
         ProfileView()
     }
 }
 
-#Preview {
+#Preview("Profile - Light") {
     ProfileView()
         .environmentObject(AuthService())
         .environmentObject(AppState())
+}
+
+#Preview("Profile - Dark") {
+    ProfileView()
+        .environmentObject(AuthService())
+        .environmentObject(AppState())
+        .preferredColorScheme(.dark)
 }
