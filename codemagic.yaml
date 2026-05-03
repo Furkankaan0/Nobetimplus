@@ -95,8 +95,18 @@ workflows:
           cd $CM_BUILD_DIR
           LATEST_BUILD_NUMBER=$(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID" 2>/dev/null || echo "0")
           NEW_BUILD_NUMBER=$((LATEST_BUILD_NUMBER + 1))
-          echo "Setting build number to: $NEW_BUILD_NUMBER"
-          agvtool new-version -all $NEW_BUILD_NUMBER
+          echo "Latest TestFlight build: $LATEST_BUILD_NUMBER → Setting to: $NEW_BUILD_NUMBER"
+          
+          # Try agvtool first (requires VERSIONING_SYSTEM = apple-generic)
+          agvtool new-version -all $NEW_BUILD_NUMBER 2>/dev/null || true
+          
+          # Verify it worked, fallback to direct sed if not
+          CURRENT=$(agvtool vers -terse 2>/dev/null || echo "0")
+          if [ "$CURRENT" != "$NEW_BUILD_NUMBER" ]; then
+            echo "agvtool failed, using direct replacement..."
+            sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*/CURRENT_PROJECT_VERSION = $NEW_BUILD_NUMBER/g" "$XCODE_PROJECT/project.pbxproj"
+          fi
+          echo "Build number confirmed: $(agvtool vers -terse 2>/dev/null || grep CURRENT_PROJECT_VERSION $XCODE_PROJECT/project.pbxproj | head -1)"
           
       - name: Set up code signing settings on Xcode project
         script: |
