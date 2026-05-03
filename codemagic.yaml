@@ -90,6 +90,10 @@ workflows:
         script: |
           keychain add-certificates
 
+      - name: Set up code signing settings on Xcode project
+        script: |
+          xcode-project use-profiles
+
       - name: Increment build number
         script: |
           cd $CM_BUILD_DIR
@@ -97,34 +101,30 @@ workflows:
           NEW_BUILD_NUMBER=$((LATEST_BUILD_NUMBER + 1))
           echo "=== Build Number: $LATEST_BUILD_NUMBER → $NEW_BUILD_NUMBER ==="
           
-          # Method 1: agvtool (needs VERSIONING_SYSTEM = apple-generic)
-          agvtool new-version -all $NEW_BUILD_NUMBER 2>/dev/null || echo "agvtool failed, continuing..."
-          
-          # Method 2: Direct sed on project.pbxproj
+          # Update project file
           sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*/CURRENT_PROJECT_VERSION = $NEW_BUILD_NUMBER/g" "$XCODE_PROJECT/project.pbxproj"
-          echo "pbxproj updated via sed"
           
-          # Method 3: Replace variable in Info.plist with actual number
+          # Update Info.plist directly (overwrite variable with real number)
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $NEW_BUILD_NUMBER" "Növera/Info.plist"
-          echo "Info.plist updated via PlistBuddy"
+          
+          # Save for build step
+          echo "$NEW_BUILD_NUMBER" > /tmp/BUILD_NUMBER
           
           # Verify
-          echo "--- Verification ---"
           echo "pbxproj: $(grep 'CURRENT_PROJECT_VERSION' $XCODE_PROJECT/project.pbxproj | head -1)"
-          echo "Info.plist CFBundleVersion: $(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' Növera/Info.plist)"
-
-      - name: Set up code signing settings on Xcode project
-        script: |
-          xcode-project use-profiles
+          echo "Info.plist: $(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' Növera/Info.plist)"
 
       - name: Build and archive iOS app
         script: |
+          NEW_BUILD_NUMBER=$(cat /tmp/BUILD_NUMBER)
+          echo "Building with CURRENT_PROJECT_VERSION=$NEW_BUILD_NUMBER"
+          
           set +e
           xcode-project build-ipa \
             --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME" \
             --config "Release" \
-            --archive-flags="-destination 'generic/platform=iOS' DEVELOPMENT_TEAM=J5CYS3RDGH"
+            --archive-flags="-destination 'generic/platform=iOS' DEVELOPMENT_TEAM=J5CYS3RDGH CURRENT_PROJECT_VERSION=$NEW_BUILD_NUMBER"
           
           if [ $? -ne 0 ]; then
             echo "--- XCODEBUILD ERROR LOG ---"
