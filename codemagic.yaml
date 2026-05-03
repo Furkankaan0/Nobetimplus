@@ -47,24 +47,6 @@ workflows:
           NEW_BUILD_NUMBER=$((LATEST_BUILD_NUMBER + 1))
           echo "Setting build number to: $NEW_BUILD_NUMBER"
           agvtool new-version -all $NEW_BUILD_NUMBER
-
-      - name: Build and archive iOS app
-        script: |
-          set +e
-          xcode-project build-ipa \
-            --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
-            --scheme "$XCODE_SCHEME" \
-            --config "Release" \
-            --archive-flags="-destination 'generic/platform=iOS' PROVISIONING_PROFILE_SPECIFIER=$PROVISIONING_PROFILE_ID" \
-            --export-options-plist /Users/builder/export_options.plist
-          
-          if [ $? -ne 0 ]; then
-            echo "--- XCODEBUILD ERROR LOG ---"
-            cat /tmp/xcodebuild_archive.log 2>/dev/null || find /Users/builder/clone -name "*.log" -exec cat {} +
-            exit 1
-          fi
-          set -e
-
       - name: Generate export options plist
         script: |
           cat > /Users/builder/export_options.plist <<EOF
@@ -83,6 +65,23 @@ workflows:
           </dict>
           </plist>
           EOF
+
+      - name: Build and archive iOS app
+        script: |
+          set +e
+          xcode-project build-ipa \
+            --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME" \
+            --config "Release" \
+            --archive-flags="-destination 'generic/platform=iOS' PROVISIONING_PROFILE_SPECIFIER=$PROVISIONING_PROFILE_ID" \
+            --export-options-plist /Users/builder/export_options.plist
+          
+          if [ $? -ne 0 ]; then
+            echo "--- XCODEBUILD ERROR LOG ---"
+            cat /tmp/xcodebuild_archive.log 2>/dev/null || find /Users/builder/clone -name "*.log" -exec cat {} +
+            exit 1
+          fi
+          set -e
 
     artifacts:
       - build/ios/ipa/*.ipa
