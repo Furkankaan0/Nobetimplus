@@ -35,6 +35,51 @@ workflows:
         script: |
           python3 -c "import base64, os; open('/tmp/cert_key.pem', 'wb').write(base64.b64decode(os.environ.get('CERTIFICATE_PRIVATE_KEY', '')))"
           
+          # Clean up existing App Store profiles to force Codemagic to recreate them with the correct certificate
+          pip3 install pyjwt requests cryptography
+          python3 -c "
+          import os, time, requests, base64
+          import jwt
+          
+          issuer_id = os.environ.get('APP_STORE_CONNECT_ISSUER_ID')
+          key_id = os.environ.get('APP_STORE_CONNECT_KEY_IDENTIFIER')
+          private_key = os.environ.get('APP_STORE_CONNECT_PRIVATE_KEY')
+          bundle_id = os.environ.get('BUNDLE_ID')
+          
+          if not all([issuer_id, key_id, private_key]):
+              print('API keys missing, skipping profile deletion.')
+              exit(0)
+              
+          if 'BEGIN PRIVATE KEY' not in private_key:
+              try:
+                  private_key = base64.b64decode(private_key).decode('utf-8')
+              except:
+                  pass
+                  
+          token = jwt.encode(
+              {'iss': issuer_id, 'exp': int(time.time()) + 1200, 'aud': 'appstoreconnect-v1'},
+              private_key,
+              algorithm='ES256',
+              headers={'kid': key_id}
+          )
+          
+          headers = {'Authorization': f'Bearer {token}'}
+          
+          print('Authenticating with App Store Connect API...')
+          r = requests.get(f'https://api.appstoreconnect.apple.com/v1/bundleIds?filter[identifier]={bundle_id}', headers=headers)
+          if r.status_code == 200 and r.json().get('data'):
+              bid_id = r.json()['data'][0]['id']
+              print(f'Found Bundle ID: {bid_id}')
+              r2 = requests.get(f'https://api.appstoreconnect.apple.com/v1/profiles?filter[bundleId]={bid_id}&filter[profileType]=IOS_APP_STORE', headers=headers)
+              if r2.status_code == 200:
+                  for p in r2.json().get('data', []):
+                      name = p['attributes']['name']
+                      print(f'Deleting invalid profile: {name}')
+                      requests.delete(f'https://api.appstoreconnect.apple.com/v1/profiles/{p[\"id\"]}', headers=headers)
+          else:
+              print('Bundle ID not found or API auth failed.')
+          "
+          
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --create \
