@@ -47,6 +47,10 @@ workflows:
           NEW_BUILD_NUMBER=$((LATEST_BUILD_NUMBER + 1))
           echo "Setting build number to: $NEW_BUILD_NUMBER"
           agvtool new-version -all $NEW_BUILD_NUMBER
+      - name: Set up code signing settings on Xcode project
+        script: |
+          xcode-project use-profiles
+
       - name: Generate export options plist
         script: |
           cat > /Users/builder/export_options.plist <<EOF
@@ -73,7 +77,7 @@ workflows:
             --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME" \
             --config "Release" \
-            --archive-flags="-destination 'generic/platform=iOS' PROVISIONING_PROFILE_SPECIFIER=$PROVISIONING_PROFILE_ID" \
+            --archive-flags="-destination 'generic/platform=iOS'" \
             --export-options-plist /Users/builder/export_options.plist
           
           if [ $? -ne 0 ]; then
