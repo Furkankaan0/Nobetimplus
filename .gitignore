@@ -24,6 +24,7 @@ Carthage/Build/
 *.cer
 *.pem
 *.key
+*.pub
 .env
 .env.*
 
