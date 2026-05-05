@@ -16,6 +16,8 @@ settings:
     DEVELOPMENT_TEAM: ""
     CODE_SIGN_STYLE: Automatic
     TARGETED_DEVICE_FAMILY: "1"
+    SUPPORTS_MACCATALYST: NO
+    SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
     SWIFT_EMIT_LOC_STRINGS: YES
     ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
@@ -31,6 +33,7 @@ targets:
         PRODUCT_NAME: "$(TARGET_NAME)"
         INFOPLIST_FILE: NobetimPlus/Info.plist
         CODE_SIGN_ENTITLEMENTS: NobetimPlus/NobetimPlus.entitlements
+        TARGETED_DEVICE_FAMILY: "1"
   NobetimPlusTests:
     type: bundle.unit-test
     platform: iOS
