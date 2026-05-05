@@ -20,6 +20,7 @@ Nöbetim+ sağlık çalışanları için iOS’a özel, offline-first nöbet, va
    - `APP_STORE_CONNECT_PRIVATE_KEY`: `.p8` dosyasının tamamı.
    - `APP_STORE_CONNECT_KEY_IDENTIFIER`: Key ID.
    - `APP_STORE_CONNECT_ISSUER_ID`: Issuer ID.
+   - `CERTIFICATE_PRIVATE_KEY`: Apple Distribution certificate oluşturmak/fetch etmek için 2048-bit RSA PEM private key.
 4. Bu proje için `codemagic.yaml` değerleri ayarlı:
    - `BUNDLE_ID`: `com.nobetimplus.app`
    - `XCODE_SCHEME`: `NobetimPlus`
@@ -29,7 +30,13 @@ Nöbetim+ sağlık çalışanları için iOS’a özel, offline-first nöbet, va
 
 Private key `.p8` dosyasını repoya ekleme. `codemagic.yaml` yalnızca Codemagic secret environment variable değerlerini okur.
 
-Kod imzalama notu: Codemagic otomatik signing için App Store Connect API key ile signing files çekmeye çalışır. Codemagic hesabında geçerli Apple Distribution certificate/provisioning profile yoksa Codemagic code signing identities alanından sertifika oluştur veya `CERTIFICATE_PRIVATE_KEY` değişkenini Codemagic’in signing dokümanına göre ekle.
+Kod imzalama notu: Codemagic otomatik signing için App Store Connect API key ile signing files çeker. Yeni veya eşleşen Apple Distribution certificate oluşturabilmesi için `CERTIFICATE_PRIVATE_KEY` gerekir. Bunu Mac/Linux terminalde şu komutla üretip Codemagic’e Secret olarak ekleyebilirsin:
+
+```bash
+ssh-keygen -t rsa -b 2048 -m PEM -f ./codemagic_distribution_private_key -q -N ""
+```
+
+Dosyanın içeriğini `CERTIFICATE_PRIVATE_KEY` değişkenine yapıştır. Bu private key’i repoya ekleme. Aynı key Codemagic’te kalıcı kalmalı; her build’de yeni key üretme.
 
 ## Sık imzalama sorunları
 
@@ -38,6 +45,7 @@ Kod imzalama notu: Codemagic otomatik signing için App Store Connect API key il
 - App Group hatasında `group.com.nobetimplus.app` Apple Developer’da eklenmiş olmalı.
 - TestFlight yükleme hatasında `APP_STORE_APPLE_ID` App Store Connect uygulama Apple ID’si olmalı.
 - `APP_STORE_CONNECT_PRIVATE_KEY is missing` hatasında variable group adı `appstore_credentials` olmalı ve workflow bu gruba erişmeli.
+- `Cannot save Signing Certificates without certificate private key` hatasında `CERTIFICATE_PRIVATE_KEY` eksiktir veya `fetch-signing-files` komutuna geçmiyordur.
 
 ## MVP kapsamı
 
