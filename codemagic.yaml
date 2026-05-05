@@ -70,11 +70,11 @@ workflows:
             PRODUCT_BUNDLE_IDENTIFIER="$BUNDLE_ID"
       - name: Export ipa
         script: |
-          xcode-project build-ipa \
-            --project NobetimPlus.xcodeproj \
-            --scheme "$XCODE_SCHEME" \
-            --archive "$CM_BUILD_DIR/build/NobetimPlus.xcarchive" \
-            --export-method app-store
+          mkdir -p "$CM_BUILD_DIR/build/ios/ipa"
+          xcodebuild -exportArchive \
+            -archivePath "$CM_BUILD_DIR/build/NobetimPlus.xcarchive" \
+            -exportPath "$CM_BUILD_DIR/build/ios/ipa" \
+            -exportOptionsPlist exportOptions.plist
     artifacts:
       - build/ios/ipa/*.ipa
       - build/NobetimPlus.xcarchive/dSYMs/*.dSYM
