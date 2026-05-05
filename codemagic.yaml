@@ -71,10 +71,15 @@ workflows:
       - name: Export ipa
         script: |
           mkdir -p "$CM_BUILD_DIR/build/ios/ipa"
+          EXPORT_OPTIONS_PLIST="$CM_BUILD_DIR/export_options.plist"
+          if [ ! -f "$EXPORT_OPTIONS_PLIST" ]; then
+            EXPORT_OPTIONS_PLIST="exportOptions.plist"
+          fi
+          echo "Using export options: $EXPORT_OPTIONS_PLIST"
           xcodebuild -exportArchive \
             -archivePath "$CM_BUILD_DIR/build/NobetimPlus.xcarchive" \
             -exportPath "$CM_BUILD_DIR/build/ios/ipa" \
-            -exportOptionsPlist exportOptions.plist
+            -exportOptionsPlist "$EXPORT_OPTIONS_PLIST"
     artifacts:
       - build/ios/ipa/*.ipa
       - build/NobetimPlus.xcarchive/dSYMs/*.dSYM
