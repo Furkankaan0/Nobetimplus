@@ -46,6 +46,7 @@ Dosyanın içeriğini `CERTIFICATE_PRIVATE_KEY` değişkenine yapıştır. Bu pr
 - TestFlight yükleme hatasında `APP_STORE_APPLE_ID` App Store Connect uygulama Apple ID’si olmalı.
 - `APP_STORE_CONNECT_PRIVATE_KEY is missing` hatasında variable group adı `appstore_credentials` olmalı ve workflow bu gruba erişmeli.
 - `Cannot save Signing Certificates without certificate private key` hatasında `CERTIFICATE_PRIVATE_KEY` eksiktir veya `fetch-signing-files` komutuna geçmiyordur.
+- `You already have a current Distribution certificate or a pending certificate request` hatasında Apple Developer hesabında Distribution certificate limiti doludur. Apple Developer > Certificates alanında kullanılmayan bir `Apple Distribution` / `iOS Distribution` sertifikasını revoke et, sonra aynı `CERTIFICATE_PRIVATE_KEY` ile Codemagic build’i yeniden çalıştır. Yeni key üretme; mevcut Codemagic variable aynı kalmalı.
 
 ## MVP kapsamı
 
