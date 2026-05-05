@@ -163,6 +163,7 @@ struct Shift: Identifiable, Codable, Hashable {
     var breakMinutes: Int
     var createdAt: Date
     var updatedAt: Date
+    var deletedAt: Date?
     var syncStatus: SyncStatus
 
     init(
@@ -186,6 +187,7 @@ struct Shift: Identifiable, Codable, Hashable {
         breakMinutes: Int = 0,
         createdAt: Date = .now,
         updatedAt: Date = .now,
+        deletedAt: Date? = nil,
         syncStatus: SyncStatus = .local
     ) {
         self.id = id
@@ -208,6 +210,7 @@ struct Shift: Identifiable, Codable, Hashable {
         self.breakMinutes = breakMinutes
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+        self.deletedAt = deletedAt
         self.syncStatus = syncStatus
     }
 }

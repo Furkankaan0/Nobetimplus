@@ -5,9 +5,16 @@ struct DashboardView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var didEnter = false
 
-    private var summary: WorkSummary { appState.monthlySummary() }
-    private var todayShift: Shift? { appState.shifts.shifts(on: .now).first }
-    private var teamToday: [TeamMember] { appState.teams.first?.members.filter(\.isOnDutyToday) ?? [] }
+    private var viewModel: DashboardViewModel {
+        DashboardViewModel(
+            profile: appState.profile,
+            shifts: appState.shifts,
+            teams: appState.teams,
+            summary: appState.monthlySummary(),
+            insights: appState.insights(),
+            calculator: appState.calculator
+        )
+    }
 
     var body: some View {
         NavigationStack {
@@ -17,10 +24,10 @@ struct DashboardView: View {
                     LazyVStack(alignment: .leading, spacing: Spacing.large) {
                         commandHeader
                         DailyCommandHero(
-                            shift: todayShift,
-                            durationText: todayShift.map { String(format: "%.1f saat", appState.calculator.calculateShiftDuration($0)) } ?? "0 saat",
-                            nextText: nextShiftText,
-                            workload: workloadPercent
+                            shift: viewModel.todayShift,
+                            durationText: viewModel.durationText(for: viewModel.todayShift),
+                            nextText: viewModel.nextShiftText,
+                            workload: viewModel.workloadPercent
                         )
                         rhythmStrip
                         awardBadges
@@ -63,7 +70,7 @@ struct DashboardView: View {
                 Text("NÖBET KONTROL MERKEZİ")
                     .font(.caption.weight(.black))
                     .foregroundStyle(DesignColors.secondary)
-                Text(greeting)
+                Text(viewModel.greeting)
                     .font(.system(.title, design: .rounded, weight: .black))
                     .lineLimit(1)
                     .minimumScaleFactor(0.74)
@@ -77,10 +84,10 @@ struct DashboardView: View {
         VStack(alignment: .leading, spacing: Spacing.medium) {
             AwardSectionHeader(title: "Çalışma ritmi", subtitle: "Ay sonu yükünü erken gör", icon: "chart.xyaxis.line", color: DesignColors.primary)
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Spacing.medium) {
-                CinematicMetricCard(title: "Toplam", value: hourText(summary.totalWorkHours), footnote: "Bu ay", color: DesignColors.primary, systemImage: "clock.fill")
-                CinematicMetricCard(title: "Fazla mesai", value: hourText(summary.overtimeHours), footnote: "Ayrı rapor", color: DesignColors.accent, systemImage: "plus.forwardslash.minus")
-                CinematicMetricCard(title: "UBGT", value: hourText(summary.officialHolidayHours), footnote: "Resmi tatil", color: DesignColors.warning, systemImage: "flag.fill")
-                CinematicMetricCard(title: "Tahmini gelir", value: moneyText(summary.estimatedTotalExtraIncome), footnote: "Bordro değildir", color: DesignColors.success, systemImage: "turkishlirasign.circle.fill")
+                CinematicMetricCard(title: "Toplam", value: hourText(viewModel.summary.totalWorkHours), footnote: "Bu ay", color: DesignColors.primary, systemImage: "clock.fill")
+                CinematicMetricCard(title: "Fazla mesai", value: hourText(viewModel.summary.overtimeHours), footnote: "Ayrı rapor", color: DesignColors.accent, systemImage: "plus.forwardslash.minus")
+                CinematicMetricCard(title: "UBGT", value: hourText(viewModel.summary.officialHolidayHours), footnote: "Resmi tatil", color: DesignColors.warning, systemImage: "flag.fill")
+                CinematicMetricCard(title: "Tahmini gelir", value: moneyText(viewModel.summary.estimatedTotalExtraIncome), footnote: "Bordro değildir", color: DesignColors.success, systemImage: "turkishlirasign.circle.fill")
             }
         }
     }
@@ -90,9 +97,9 @@ struct DashboardView: View {
             VStack(alignment: .leading, spacing: Spacing.large) {
                 AwardSectionHeader(title: "Başarı vitrini", subtitle: "Günlük kullanım için küçük hedefler", icon: "crown.fill", color: DesignColors.warning)
                 HStack(spacing: Spacing.medium) {
-                    AwardDepthBadge(title: "Planlı", subtitle: "\(appState.shifts.count) kayıt", systemImage: "calendar.badge.checkmark", color: DesignColors.primary)
+                    AwardDepthBadge(title: "Planlı", subtitle: "\(viewModel.shifts.count) kayıt", systemImage: "calendar.badge.checkmark", color: DesignColors.primary)
                     Spacer()
-                    AwardDepthBadge(title: "Denge", subtitle: "\(Int(workloadPercent))%", systemImage: "gauge.with.dots.needle.67percent", color: DesignColors.secondary)
+                    AwardDepthBadge(title: "Denge", subtitle: "\(Int(viewModel.workloadPercent))%", systemImage: "gauge.with.dots.needle.67percent", color: DesignColors.secondary)
                     Spacer()
                     AwardDepthBadge(title: "Premium", subtitle: appState.profile.premiumStatus.isPremium ? "Açık" : "Kilitli", systemImage: "sparkles", color: DesignColors.accent)
                 }
@@ -103,7 +110,7 @@ struct DashboardView: View {
     private var insightSection: some View {
         VStack(alignment: .leading, spacing: Spacing.medium) {
             AwardSectionHeader(title: "Akıllı içgörü", subtitle: "Tıbbi öneri değil, çalışma farkındalığı", icon: "sparkle.magnifyingglass", color: DesignColors.accent)
-            ForEach(appState.insights().prefix(2)) { insight in
+            ForEach(viewModel.insights.prefix(2)) { insight in
                 SmartInsightCard(insight: insight)
             }
         }
@@ -113,34 +120,17 @@ struct DashboardView: View {
         VStack(alignment: .leading, spacing: Spacing.medium) {
             HStack {
                 AwardSectionHeader(title: "Ekip nabzı", subtitle: "Bugün çalışanlar", icon: "person.3.fill", color: DesignColors.secondary)
-                ShiftStatusCapsule(title: "\(teamToday.count)", color: DesignColors.secondary, systemImage: "person.fill.checkmark")
+                ShiftStatusCapsule(title: "\(viewModel.teamToday.count)", color: DesignColors.secondary, systemImage: "person.fill.checkmark")
             }
 
-            if teamToday.isEmpty {
+            if viewModel.teamToday.isEmpty {
                 EmptyStateView(title: "Ekip bilgisi yok", message: "Davet kodu ve ekip takvimi mock akış olarak hazır.", systemImage: "person.3")
             } else {
-                ForEach(Array(teamToday.prefix(3))) { member in
+                ForEach(Array(viewModel.teamToday.prefix(3))) { member in
                     TeamMemberRow(member: member)
                 }
             }
         }
-    }
-
-    private var workloadPercent: Double {
-        min(summary.totalWorkHours / max(appState.profile.monthlyNormalHours, 1) * 100, 100)
-    }
-
-    private var greeting: String {
-        let name = appState.profile.fullName.trimmingCharacters(in: .whitespacesAndNewlines)
-        return name.isEmpty ? "Bugünkü ritmini kur" : "Merhaba, \(name)"
-    }
-
-    private var nextShiftText: String {
-        guard let next = appState.shifts.filter({ $0.startDate > .now }).sorted(by: { $0.startDate < $1.startDate }).first else {
-            return "Planlı sıradaki nöbet yok"
-        }
-        let hours = max(next.startDate.timeIntervalSinceNow / 3600, 0)
-        return "Sıradaki nöbete yaklaşık \(Int(hours)) saat kaldı"
     }
 
     private func hourText(_ value: Double) -> String {

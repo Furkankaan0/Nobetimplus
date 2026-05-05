@@ -11,7 +11,9 @@ final class LocalShiftRepository: ShiftRepositoryProtocol {
 
     func fetchShifts() throws -> [Shift] {
         let descriptor = FetchDescriptor<LocalShiftEntity>(sortBy: [SortDescriptor(\.startDate)])
-        return try modelContext.fetch(descriptor).map(\.domainModel)
+        return try modelContext.fetch(descriptor)
+            .filter { $0.deletedAt == nil }
+            .map(\.domainModel)
     }
 
     func upsert(_ shift: Shift) throws {
@@ -32,7 +34,9 @@ final class LocalShiftRepository: ShiftRepositoryProtocol {
         let id = shift.id
         let descriptor = FetchDescriptor<LocalShiftEntity>(predicate: #Predicate { $0.id == id })
         for entity in try modelContext.fetch(descriptor) {
-            modelContext.delete(entity)
+            entity.deletedAt = .now
+            entity.updatedAt = .now
+            entity.syncStatusRawValue = SyncStatus.pending.rawValue
         }
         try modelContext.save()
     }

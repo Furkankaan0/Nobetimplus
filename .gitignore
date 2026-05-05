@@ -27,6 +27,8 @@ Carthage/Build/
 *.pub
 .env
 .env.*
+!.env.example
+!backend/.env.example
 
 # macOS / Windows
 .DS_Store
@@ -35,3 +37,7 @@ desktop.ini
 
 # Logs
 *.log
+
+# Node / backend
+node_modules/
+backend/dist/

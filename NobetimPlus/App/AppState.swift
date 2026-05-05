@@ -15,22 +15,25 @@ final class AppState: ObservableObject {
 
     let calculator = WorkCalculationEngine()
     let insightEngine = SmartInsightEngine()
-    let notificationService = NotificationService()
+    let notificationManager = NotificationManager()
     let appleSignInManager = AppleSignInManager()
+    let authService = AuthService()
+    let calendarSyncService = CalendarSyncService()
+    let revenueService = RevenueCalculationService()
 
-    private let shiftRepository: ShiftRepositoryProtocol
-    private let teamRepository: TeamRepositoryProtocol
     private let settingsRepository: SettingsRepositoryProtocol
     private var hasBootstrapped = false
+    private let shiftService: ShiftService
+    private let teamService: TeamService
 
     init(
         shiftRepository: ShiftRepositoryProtocol,
         teamRepository: TeamRepositoryProtocol,
         settingsRepository: SettingsRepositoryProtocol
     ) {
-        self.shiftRepository = shiftRepository
-        self.teamRepository = teamRepository
         self.settingsRepository = settingsRepository
+        self.shiftService = ShiftService(repository: shiftRepository)
+        self.teamService = TeamService(repository: teamRepository)
         self.profile = settingsRepository.loadProfile()
         self.hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "nobetimplus.hasCompletedOnboarding")
     }
@@ -40,11 +43,11 @@ final class AppState: ObservableObject {
         hasBootstrapped = true
         isLoading = true
         do {
-            shifts = try shiftRepository.fetchShifts()
-            teams = try teamRepository.fetchTeams()
+            shifts = try shiftService.shifts()
+            teams = try teamService.teams()
             if shifts.isEmpty {
-                try MockData.shifts.forEach { try shiftRepository.upsert($0) }
-                shifts = try shiftRepository.fetchShifts()
+                try MockData.shifts.forEach { try shiftService.save($0) }
+                shifts = try shiftService.shifts()
             }
             errorMessage = nil
         } catch {
@@ -62,9 +65,9 @@ final class AppState: ObservableObject {
 
     func addShift(_ shift: Shift) {
         do {
-            try shiftRepository.upsert(shift)
-            shifts = try shiftRepository.fetchShifts()
-            notificationService.scheduleShiftReminder(for: shift)
+            try shiftService.save(shift)
+            shifts = try shiftService.shifts()
+            notificationManager.scheduleShiftReminder(for: shift)
             showToast("Nöbet kaydedildi")
         } catch {
             errorMessage = error.localizedDescription
@@ -73,9 +76,9 @@ final class AppState: ObservableObject {
 
     func deleteShift(_ shift: Shift) {
         do {
-            try shiftRepository.delete(shift)
-            shifts = try shiftRepository.fetchShifts()
-            notificationService.cancelReminder(for: shift)
+            try shiftService.delete(shift)
+            shifts = try shiftService.shifts()
+            notificationManager.cancelShiftReminder(for: shift)
             showToast("Nöbet silindi")
         } catch {
             errorMessage = error.localizedDescription
@@ -98,7 +101,11 @@ final class AppState: ObservableObject {
     }
 
     func monthlySummary(month: Date = .now) -> WorkSummary {
-        calculator.makeMonthlySummary(shifts: shifts, month: month, settings: workSettings())
+        revenueService.monthlySummary(shifts: shifts, month: month, settings: workSettings())
+    }
+
+    func earningsSummary(month: Date = .now) -> EarningsSummary {
+        revenueService.earningsSummary(shifts: shifts, month: month, settings: workSettings())
     }
 
     func insights(month: Date = .now) -> [SmartInsight] {
@@ -107,7 +114,7 @@ final class AppState: ObservableObject {
 
     func requestNotifications() {
         Task {
-            let granted = await notificationService.requestPermission()
+            let granted = await notificationManager.requestAuthorization()
             showToast(granted ? "Bildirimler açıldı" : "Bildirim izni verilmedi")
         }
     }

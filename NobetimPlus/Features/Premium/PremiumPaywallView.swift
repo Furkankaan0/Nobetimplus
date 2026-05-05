@@ -1,70 +1,8 @@
-import StoreKit
 import SwiftUI
-
-@MainActor
-final class SubscriptionManager: ObservableObject {
-    @Published private(set) var products: [Product] = []
-    @Published private(set) var premiumStatus: PremiumStatus = .free
-    var mockMode = true
-
-    func loadProducts() async {
-        guard !mockMode else { return }
-        do {
-            products = try await Product.products(for: PremiumPlanKind.allCases.map(\.productID))
-            await refreshEntitlements()
-        } catch {
-            products = []
-        }
-    }
-
-    func purchase(_ plan: PremiumPlanKind) async -> PremiumStatus {
-        guard !mockMode else {
-            premiumStatus = plan == .lifetime ? .lifetime : (plan == .yearly ? .yearly : .monthly)
-            return premiumStatus
-        }
-
-        guard let product = products.first(where: { $0.id == plan.productID }) else { return .free }
-        do {
-            let result = try await product.purchase()
-            if case let .success(verification) = result,
-               case let .verified(transaction) = verification {
-                await transaction.finish()
-                premiumStatus = plan == .lifetime ? .lifetime : (plan == .yearly ? .yearly : .monthly)
-            }
-        } catch {
-            return .free
-        }
-        return premiumStatus
-    }
-
-    func restorePurchases() async -> PremiumStatus {
-        guard !mockMode else {
-            premiumStatus = .yearly
-            return premiumStatus
-        }
-        try? await AppStore.sync()
-        await refreshEntitlements()
-        return premiumStatus
-    }
-
-    private func refreshEntitlements() async {
-        premiumStatus = .free
-        for await entitlement in Transaction.currentEntitlements {
-            guard case let .verified(transaction) = entitlement else { continue }
-            if transaction.productID == PremiumPlanKind.lifetime.productID {
-                premiumStatus = .lifetime
-            } else if transaction.productID == PremiumPlanKind.yearly.productID {
-                premiumStatus = .yearly
-            } else if transaction.productID == PremiumPlanKind.monthly.productID {
-                premiumStatus = .monthly
-            }
-        }
-    }
-}
 
 struct PremiumPaywallView: View {
     @ObservedObject var appState: AppState
-    @StateObject private var subscriptionManager = SubscriptionManager()
+    @StateObject private var storeKitService = StoreKitService()
 
     var body: some View {
         NavigationStack {
@@ -77,9 +15,9 @@ struct PremiumPaywallView: View {
 
                         PremiumGlassPanel(cornerRadius: 30) {
                             VStack(alignment: .leading, spacing: Spacing.medium) {
-                                Text("Premium ile tüm kontrol sende")
+                                Text("Pro ile tüm kontrol sende")
                                     .font(.system(.title2, design: .rounded, weight: .black))
-                                Text("Nöbetim+ Premium ile sınırsız nöbet, gelişmiş mesai analizi, resmi tatil hesaplama, widget’lar, ekip yönetimi, akıllı içgörüler ve premium temalar açılır.")
+                                Text("Nöbetim+ Pro ile sınırsız nöbet, ekip yönetimi, gelişmiş mesai analizi, resmi tatil hesaplama, widget’lar, akıllı öneriler ve gelişmiş raporlar açılır.")
                                     .font(.body.weight(.semibold))
                                     .foregroundStyle(.secondary)
                                     .fixedSize(horizontal: false, vertical: true)
@@ -88,7 +26,7 @@ struct PremiumPaywallView: View {
                                     PlanFeatureRow(title: "Sınırsız nöbet", icon: "infinity", color: DesignColors.primary)
                                     PlanFeatureRow(title: "Gelir analizi", icon: "banknote.fill", color: DesignColors.success)
                                     PlanFeatureRow(title: "Ekip yönetimi", icon: "person.3.fill", color: DesignColors.secondary)
-                                    PlanFeatureRow(title: "Akıllı içgörü", icon: "sparkles", color: DesignColors.accent)
+                                    PlanFeatureRow(title: "Akıllı öneri", icon: "sparkles", color: DesignColors.accent)
                                 }
                             }
                         }
@@ -99,7 +37,7 @@ struct PremiumPaywallView: View {
 
                         Button("Satın alımları geri yükle") {
                             Task {
-                                let status = await subscriptionManager.restorePurchases()
+                                let status = await storeKitService.restorePurchases()
                                 var profile = appState.profile
                                 profile.premiumStatus = status
                                 appState.updateProfile(profile)
@@ -119,9 +57,9 @@ struct PremiumPaywallView: View {
                     .padding(.bottom, Spacing.large)
                 }
             }
-            .navigationTitle("Premium")
+            .navigationTitle("Pro")
             .toolbarBackground(.hidden, for: .navigationBar)
-            .task { await subscriptionManager.loadProducts() }
+            .task { await storeKitService.loadProducts() }
         }
     }
 
@@ -131,11 +69,11 @@ struct PremiumPaywallView: View {
 
         return Button {
             Task {
-                let status = await subscriptionManager.purchase(plan.id)
+                let status = await storeKitService.purchase(plan.id)
                 var profile = appState.profile
                 profile.premiumStatus = status
                 appState.updateProfile(profile)
-                appState.showToast("Premium etkinleştirildi")
+                appState.showToast("Pro etkinleştirildi")
             }
         } label: {
             PremiumGlassPanel(cornerRadius: 26) {
@@ -161,7 +99,7 @@ struct PremiumPaywallView: View {
 
                     if isHighlighted {
                         Divider().opacity(0.35)
-                        Text(plan.id == .lifetime ? "Tek sefer öde, Premium alanları kalıcı aç." : "Aylığa göre daha avantajlı yıllık deneyim.")
+                        Text(plan.id == .lifetime ? "Tek sefer öde, Pro alanları kalıcı aç." : "Aylığa göre daha avantajlı yıllık deneyim.")
                             .font(.caption.weight(.bold))
                             .foregroundStyle(.secondary)
                     }
@@ -214,7 +152,7 @@ struct PremiumPaywallCard: View {
         PremiumGlassPanel(cornerRadius: 28) {
             VStack(alignment: .leading, spacing: Spacing.medium) {
                 HStack {
-                    ShiftStatusCapsule(title: "Premium", subtitle: "Analiz + ekip", color: DesignColors.accent, systemImage: "sparkles")
+                    ShiftStatusCapsule(title: "Pro", subtitle: "Analiz + ekip", color: DesignColors.accent, systemImage: "sparkles")
                     Spacer()
                     Image("BrandLogo")
                         .resizable()
@@ -225,7 +163,7 @@ struct PremiumPaywallCard: View {
                 Text("Gelişmiş analiz, gelir hesaplama, ekip yönetimi, widget ve premium temaları aç.")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.secondary)
-                PremiumCTAButton(title: "Premium’u keşfet", systemImage: "sparkles", tint: DesignColors.accent, action: action)
+                PremiumCTAButton(title: "Pro’yu keşfet", systemImage: "sparkles", tint: DesignColors.accent, action: action)
             }
         }
     }

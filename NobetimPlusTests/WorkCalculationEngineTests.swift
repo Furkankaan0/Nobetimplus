@@ -1,4 +1,5 @@
 import XCTest
+import SwiftData
 @testable import NobetimPlus
 
 final class WorkCalculationEngineTests: XCTestCase {
@@ -60,6 +61,36 @@ final class WorkCalculationEngineTests: XCTestCase {
         )
         XCTAssertEqual(summary.normalShiftHours, 8, accuracy: 0.01)
         XCTAssertEqual(summary.overtimeHours, 3, accuracy: 0.01)
+    }
+
+    func testEarningsSummaryUsesOvertimeAndHolidayRates() {
+        let shifts = [
+            makeShift(hour: 8, duration: 8, kind: .normalShift),
+            makeShift(hour: 17, duration: 3, kind: .overtime),
+            makeShift(hour: 9, duration: 7.5, kind: .officialHoliday, holiday: true)
+        ]
+        let settings = WorkCalculationSettings(monthlyNormalHours: 160, overtimeHourlyRate: 100, holidayHourlyRate: 200, nightWorkMultiplier: 1, additionalPayment: 50)
+        let earnings = RevenueCalculationService(calculator: WorkCalculationEngine(calendar: calendar))
+            .earningsSummary(shifts: shifts, month: date(hour: 0), settings: settings)
+
+        XCTAssertEqual(earnings.overtimeHours, 3, accuracy: 0.01)
+        XCTAssertEqual(earnings.holidayHours, 7.5, accuracy: 0.01)
+        XCTAssertEqual(earnings.estimatedRevenue, 1850, accuracy: 0.01)
+    }
+
+    @MainActor
+    func testLocalRepositorySoftDeletesShift() throws {
+        let schema = Schema([LocalShiftEntity.self])
+        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: schema, configurations: [configuration])
+        let repository = LocalShiftRepository(modelContext: container.mainContext)
+        let shift = makeShift(hour: 8, duration: 8)
+
+        try repository.upsert(shift)
+        XCTAssertEqual(try repository.fetchShifts().count, 1)
+
+        try repository.delete(shift)
+        XCTAssertEqual(try repository.fetchShifts().count, 0)
     }
 
     private func makeShift(hour: Int, duration: Double, kind: WorkEntryKind = .normalShift, holiday: Bool = false) -> Shift {

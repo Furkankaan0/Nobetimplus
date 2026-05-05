@@ -52,8 +52,8 @@ enum MockData {
     static let teams: [Team] = {
         let owner = UUID()
         let members = [
-            TeamMember(id: owner, name: "Ayşe Demir", role: .owner, department: "Acil Servis", avatarColor: .blue, phoneOptional: nil, emailOptional: nil, workloadScore: 72, isOnDutyToday: true, isOnLeave: false),
-            TeamMember(id: UUID(), name: "Mehmet Kaya", role: .manager, department: "Acil Servis", avatarColor: .mint, phoneOptional: nil, emailOptional: nil, workloadScore: 61, isOnDutyToday: true, isOnLeave: false),
+            TeamMember(id: owner, name: "Ayşe Demir", role: .admin, department: "Acil Servis", avatarColor: .blue, phoneOptional: nil, emailOptional: nil, workloadScore: 72, isOnDutyToday: true, isOnLeave: false),
+            TeamMember(id: UUID(), name: "Mehmet Kaya", role: .teamLead, department: "Acil Servis", avatarColor: .mint, phoneOptional: nil, emailOptional: nil, workloadScore: 61, isOnDutyToday: true, isOnLeave: false),
             TeamMember(id: UUID(), name: "Zeynep Şahin", role: .member, department: "Acil Servis", avatarColor: .purple, phoneOptional: nil, emailOptional: nil, workloadScore: 45, isOnDutyToday: false, isOnLeave: true),
             TeamMember(id: UUID(), name: "Can Yılmaz", role: .member, department: "Acil Servis", avatarColor: .orange, phoneOptional: nil, emailOptional: nil, workloadScore: 83, isOnDutyToday: false, isOnLeave: false)
         ]

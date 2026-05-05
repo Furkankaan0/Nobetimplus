@@ -23,6 +23,7 @@ final class LocalShiftEntity {
     var breakMinutes: Int
     var createdAt: Date
     var updatedAt: Date
+    var deletedAt: Date?
     var syncStatusRawValue: String
 
     init(shift: Shift) {
@@ -46,6 +47,7 @@ final class LocalShiftEntity {
         self.breakMinutes = shift.breakMinutes
         self.createdAt = shift.createdAt
         self.updatedAt = shift.updatedAt
+        self.deletedAt = shift.deletedAt
         self.syncStatusRawValue = shift.syncStatus.rawValue
     }
 
@@ -68,6 +70,7 @@ final class LocalShiftEntity {
         reminderEnabled = shift.reminderEnabled
         breakMinutes = shift.breakMinutes
         updatedAt = .now
+        deletedAt = shift.deletedAt
         syncStatusRawValue = shift.syncStatus.rawValue
     }
 
@@ -93,6 +96,7 @@ final class LocalShiftEntity {
             breakMinutes: breakMinutes,
             createdAt: createdAt,
             updatedAt: updatedAt,
+            deletedAt: deletedAt,
             syncStatus: SyncStatus(rawValue: syncStatusRawValue) ?? .local
         )
     }
