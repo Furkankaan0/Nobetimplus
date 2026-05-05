@@ -25,7 +25,7 @@ Nöbetim+ sağlık çalışanları için iOS’a özel, offline-first nöbet, va
    - `BUNDLE_ID`: `com.nobetimplus.app`
    - `XCODE_SCHEME`: `NobetimPlus`
    - `APP_STORE_APPLE_ID`: `6766450087`
-5. Apple Developer portalında `com.nobetimplus.app` için Bundle ID aç, Sign in with Apple ve App Groups capability’lerini etkinleştir.
+5. Apple Developer portalında `com.nobetimplus.app` için Bundle ID aç ve Sign in with Apple capability’sini etkinleştir. App Groups, widget extension target’ı aktif edildiğinde ayrıca açılacak.
 6. Codemagic workflow olarak `ios-testflight` çalıştır. Windows üzerinde Xcode kurmadan Mac build ortamında arşiv ve TestFlight yüklemesi yapılır.
 
 Private key `.p8` dosyasını repoya ekleme. `codemagic.yaml` yalnızca Codemagic secret environment variable değerlerini okur.
@@ -42,7 +42,7 @@ Dosyanın içeriğini `CERTIFICATE_PRIVATE_KEY` değişkenine yapıştır. Bu pr
 
 - Provisioning profile bulunamazsa Bundle ID, team ve capability eşleşmesini kontrol et.
 - Sign in with Apple hatasında Apple Developer capability ve entitlements dosyasındaki App ID eşleşmeli.
-- App Group hatasında `group.com.nobetimplus.app` Apple Developer’da eklenmiş olmalı.
+- App Group hatası alırsan iki seçenek var: Widget/App Group kullanılacaksa Apple Developer’da `group.com.nobetimplus.app` etkinleştirip provisioning profile’ı yeniden oluştur; MVP/TestFlight için App Groups entitlement’ı kapalı kalabilir.
 - TestFlight yükleme hatasında `APP_STORE_APPLE_ID` App Store Connect uygulama Apple ID’si olmalı.
 - `APP_STORE_CONNECT_PRIVATE_KEY is missing` hatasında variable group adı `appstore_credentials` olmalı ve workflow bu gruba erişmeli.
 - `Cannot save Signing Certificates without certificate private key` hatasında `CERTIFICATE_PRIVATE_KEY` eksiktir veya `fetch-signing-files` komutuna geçmiyordur.
