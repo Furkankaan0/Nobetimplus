@@ -34,7 +34,7 @@ workflows:
           xcodebuild test \
             -project NobetimPlus.xcodeproj \
             -scheme "$XCODE_SCHEME" \
-            -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max,OS=latest'
+            -destination 'generic/platform=iOS Simulator'
       - name: Set up keychain
         script: |
           keychain initialize
