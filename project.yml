@@ -1,0 +1,58 @@
+name: NobetimPlus
+options:
+  bundleIdPrefix: com.nobetimplus
+  deploymentTarget:
+    iOS: "17.0"
+  developmentLanguage: tr
+configs:
+  Debug: debug
+  Release: release
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    CURRENT_PROJECT_VERSION: "1"
+    MARKETING_VERSION: "1.0"
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+    TARGETED_DEVICE_FAMILY: "1"
+    SWIFT_EMIT_LOC_STRINGS: YES
+    ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+targets:
+  NobetimPlus:
+    type: application
+    platform: iOS
+    sources:
+      - path: NobetimPlus
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nobetimplus.app
+        PRODUCT_NAME: "$(TARGET_NAME)"
+        INFOPLIST_FILE: NobetimPlus/Info.plist
+        CODE_SIGN_ENTITLEMENTS: NobetimPlus/NobetimPlus.entitlements
+  NobetimPlusTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: NobetimPlusTests
+    dependencies:
+      - target: NobetimPlus
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nobetimplus.app.tests
+schemes:
+  NobetimPlus:
+    build:
+      targets:
+        NobetimPlus: all
+        NobetimPlusTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - NobetimPlusTests
+      gatherCoverageData: false
+    archive:
+      config: Release

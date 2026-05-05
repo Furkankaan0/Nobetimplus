@@ -16,6 +16,12 @@ workflows:
       - name: Dependencies
         script: |
           echo "Swift Package Manager project. CocoaPods hook is ready if pods are added later."
+      - name: Generate Xcode project
+        script: |
+          if ! command -v xcodegen >/dev/null 2>&1; then
+            brew install xcodegen
+          fi
+          xcodegen generate --spec project.yml
       - name: Validate App Store Connect variables
         script: |
           test -n "$APP_STORE_CONNECT_PRIVATE_KEY" || (echo "APP_STORE_CONNECT_PRIVATE_KEY is missing from appstore_credentials" && exit 1)
